@@ -872,25 +872,53 @@ def analytics(s: Session = Depends(db)):
             "availability_trend": fleet(s)["history"],
             "reactive_avail": reactive_avail, "predictive_avail": predictive_avail,
             "note": "Projected improvement in simulated scenario - not a measured real-world result."}
-    preds = predictions(0.5, s)
-    items = []
-    if preds:
-        top = preds[0]
-        items.append({"text": f"Aircraft {top['aircraft_id']} shows sustained increase in {top['component'].lower()} vibration over the last 72 hours.",
-                      "evidence": f"Failure prob {top['failure_prob']}, RUL {top['rul']}d", "confidence": top["confidence"],
-                      "source": "telemetry+ML", "review": "Pending",
-                      "timestamp": datetime.now(timezone.utc).isoformat()})
-    hyd = [p for p in preds if p["component"] == "Hydraulic System"][:3]
-    if hyd:
-        items.append({"text": f"{len(hyd)} aircraft have predicted hydraulic-system issues within the next 30 days.",
-                      "evidence": ", ".join(p["aircraft_id"] for p in hyd), "confidence": 0.84,
-                      "source": "failure-prediction model", "review": "Pending",
-                      "timestamp": datetime.now(timezone.utc).isoformat()})
-    items.append({"text": "Maintenance workload is concentrated in the next 10-day window.",
-                  "evidence": f"{len(preds)} predicted jobs", "confidence": 0.78,
-                  "source": "scheduler", "review": "Pending",
-                  "timestamp": datetime.now(timezone.utc).isoformat()})
-    return items
+@app.get("/api/insights")
+def insights(s: Session = Depends(db)):
+    from sqlalchemy import func, or_
+    from datetime import datetime, timedelta
+    
+    insights = []
+    
+    # Top predicted failures
+    preds = s.query(Prediction).filter(Prediction.failure_probability > 0.5).order_by(Prediction.failure_probability.desc()).limit(3).all()
+    for p in preds:
+        insights.append({
+            "text": f"Aircraft {p.aircraft_id} shows sustained increase in {p.component.lower()} vibration over the last 72 hours.",
+            "evidence": f"Failure prob {p.failure_probability}, RUL {p.rul}d",
+            "confidence": p.confidence,
+            "review": "Pending"
+        })
+    
+    # Aircraft with highest risk
+    risky = s.query(Aircraft).filter(Aircraft.risk_score > 70).order_by(Aircraft.risk_score.desc()).limit(2).all()
+    for a in risky:
+        insights.append({
+            "text": f"Aircraft {a.aircraft_id} has elevated risk level.",
+            "evidence": f"Risk score: {a.risk_score}, Health: {a.health_score}",
+            "confidence": 0.8,
+            "review": "Pending"
+        })
+    
+    # Maintenance backlog
+    backlog = s.query(WorkOrder).filter(~WorkOrder.status.in_(['Completed', 'Cancelled'])).count()
+    if backlog > 0:
+        insights.append({
+            "text": f"Maintenance backlog of {backlog} open work orders.",
+            "evidence": f"{backlog} pending jobs",
+            "confidence": 0.9,
+            "review": "Pending"
+        })
+    
+    # Sensor health
+    n = s.query(SensorReading).count()
+    insights.append({
+        "text": f"System has {n} sensor readings.",
+        "evidence": "Telemetry monitoring active",
+        "confidence": 0.7,
+        "review": "Pending"
+    })
+    
+    return insights
 
 @app.get("/api/copilot")
 def copilot(q: str = "", s: Session = Depends(db)):
