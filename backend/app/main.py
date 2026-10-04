@@ -417,7 +417,15 @@ def current_telemetry(s: Session, aid: str, comp: str):
 # ---------------- App ----------------
 app = FastAPI(title="AeroSentinel API", version="1.0.0",
               description="Prototype decision-support API. Synthetic/demo data only.")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True,
+
+# CORS configuration: use FRONTEND_URL env var, fallback to localhost for local dev
+frontend_origin = os.getenv("FRONTEND_URL", "http://localhost:5173")
+if frontend_origin == "*":
+    cors_origins = ["*"]
+else:
+    cors_origins = [frontend_origin]
+
+app.add_middleware(CORSMiddleware, allow_origins=cors_origins, allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
 
 def actor(role: Optional[str] = Header(None, alias="X-Role")) -> str:
