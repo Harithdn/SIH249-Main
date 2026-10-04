@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: aerosentinel
+      POSTGRES_USER: aero
+      POSTGRES_PASSWORD: aero
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    environment:
+      DATABASE_URL: postgresql://aero:aero@postgres:5432/aerosentinel
+      JWT_SECRET: demo-secret-change-me
+    depends_on: [postgres]
+  frontend:
+    build: ./frontend
+    ports: ["5173:80"]
+    depends_on: [backend]
+volumes:
+  pgdata:

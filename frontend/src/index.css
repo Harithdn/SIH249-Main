@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+body { background: #0a1120; color: #e5e7eb; font-family: Inter, system-ui, sans-serif; }
+.card { background: #111c33; border: 1px solid #1e293b; border-radius: 10px; padding: 16px; }
+.kpi { font-size: 26px; font-weight: 700; }
+.lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #94a3b8; }
+table.dt { width: 100%; font-size: 13px; border-collapse: collapse; }
+table.dt th { text-align: left; color: #94a3b8; font-weight: 600; padding: 8px; border-bottom: 1px solid #1e293b; white-space: nowrap; }
+table.dt td { padding: 8px; border-bottom: 1px solid #16233f; white-space: nowrap; }
+.btn { background: #0ea5e9; color: #04121f; font-weight: 600; padding: 8px 14px; border-radius: 8px; font-size: 13px; }
+.btn:hover { background: #22d3ee; }
+.btn-ghost { border: 1px solid #334155; padding: 8px 14px; border-radius: 8px; font-size: 13px; color: #e2e8f0; }
+.inp { background: #0b1526; border: 1px solid #334155; border-radius: 8px; padding: 8px 10px; font-size: 13px; color: #e2e8f0; width: 100%; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
