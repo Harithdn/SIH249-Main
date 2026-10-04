@@ -8,13 +8,13 @@ import { Icon, type IconName } from './icons';
 /* ---------------- Page header ---------------- */
 export function PageHeader({ title, sub, provenance, children }: { title: string; sub?: string; provenance?: string; children?: React.ReactNode }) {
   return (
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-line pb-3">
-      <div>
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-3 border-b border-line pb-3">
+      <div className="min-w-0">
         <h1 className="font-mono text-[15px] font-semibold uppercase tracking-[0.14em] text-txt">{title}</h1>
         {sub && <div className="mt-1 max-w-3xl text-[12px] leading-relaxed text-txt-dim">{sub}</div>}
         {provenance && <div className="provenance mt-1.5">{provenance}</div>}
       </div>
-      {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
+      {children && <div className="flex max-w-full flex-wrap items-center gap-2">{children}</div>}
     </div>
   );
 }
@@ -25,15 +25,15 @@ export function Panel({ title, sub, right, children, className = '', bodyClass =
   className?: string; bodyClass?: string; icon?: IconName;
 }) {
   return (
-    <section className={`panel ${className}`}>
+    <section className={`panel min-w-0 ${className}`}>
       {title && (
         <header className="panel-head">
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5">
             {icon && <Icon name={icon} size={13} className="shrink-0 text-txt-faint" />}
-            <span className="panel-title truncate">{title}</span>
-            {sub && <span className="tlabel truncate hidden md:inline">{sub}</span>}
+            <span className="panel-title">{title}</span>
+            {sub && <span className="tlabel whitespace-nowrap">{sub}</span>}
           </div>
-          {right && <div className="flex shrink-0 items-center gap-2">{right}</div>}
+          {right && <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2">{right}</div>}
         </header>
       )}
       <div className={bodyClass}>{children}</div>
@@ -91,12 +91,19 @@ export function Metric({ label, value, unit, hint, st, big = false, className = 
   );
 }
 
-/** Information row — metrics separated by hairline dividers, not cards. */
-export function MetricRow({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+/**
+ * Metric strip — CSS grid of metric cells separated by hairline dividers.
+ * Cells wrap responsively at lower breakpoints; no cell can overlap or be
+ * squeezed (each gets an independent content area via min-width: 0).
+ * `cols` overrides the default responsive column template.
+ */
+export function MetricGrid({ children, cols = 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6', className = '' }: {
+  children: React.ReactNode; cols?: string; className?: string;
+}) {
   return (
-    <div className={`panel flex flex-wrap items-stretch divide-x divide-line overflow-x-auto ${className}`}>
+    <div className={`grid gap-px overflow-hidden rounded-[4px] border border-line bg-line ${cols} ${className}`}>
       {React.Children.map(children, (c, i) => (
-        <div key={i} className="min-w-[128px] flex-1 px-4 py-3">{c}</div>
+        <div key={i} className="min-w-0 bg-surface px-4 py-3">{c}</div>
       ))}
     </div>
   );

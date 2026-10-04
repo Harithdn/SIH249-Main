@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { get } from '../services/api';
 import { useSystem } from '../components/SystemContext';
-import { Panel, PageHeader, StatusTag, LoadingState, ErrorState, EmptyState, Metric } from '../components/ui';
+import { Panel, PageHeader, StatusTag, LoadingState, ErrorState, EmptyState, Metric, MetricGrid } from '../components/ui';
 import { pctOf, istDate } from '../lib/format';
 import { Icon } from '../components/icons';
 
@@ -32,11 +32,11 @@ export default function Recommendations() {
         provenance="AI RECOMMENDATION · HUMAN APPROVAL REQUIRED"
       />
 
-      <div className="mb-3 grid gap-3 sm:grid-cols-3">
-        <Metric label="OPEN RECOMMENDATIONS" value={rows.length} className="panel px-4 py-3" st={rows.length ? 'warn' : 'ok'} />
-        <Metric label="CRITICAL PRIORITY" value={rows.filter((r) => r.priority === 'Critical').length} className="panel px-4 py-3" st="crit" />
-        <Metric label="TOTAL ESTIMATED EFFORT" value={`${rows.reduce((s, r) => s + (r.est_hours || 0), 0)} H`} className="panel px-4 py-3" />
-      </div>
+      <MetricGrid cols="grid-cols-1 sm:grid-cols-3" className="mb-3">
+        <Metric label="OPEN RECOMMENDATIONS" value={rows.length} st={rows.length ? 'warn' : 'ok'} />
+        <Metric label="CRITICAL PRIORITY" value={rows.filter((r) => r.priority === 'Critical').length} st="crit" />
+        <Metric label="TOTAL ESTIMATED EFFORT" value={`${rows.reduce((s, r) => s + (r.est_hours || 0), 0)} H`} />
+      </MetricGrid>
 
       {rows.length === 0 ? (
         <Panel title="RECOMMENDATION QUEUE">

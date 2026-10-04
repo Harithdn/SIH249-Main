@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { get, post } from '../services/api';
 import { useSystem } from '../components/SystemContext';
-import { Panel, PageHeader, Metric, LoadingState, ErrorState, EmptyState, NotAvailable, StateTag } from '../components/ui';
+import { Panel, PageHeader, Metric, MetricGrid, LoadingState, ErrorState, EmptyState, NotAvailable, StateTag } from '../components/ui';
 import { AvailabilityChart, ParetoChart, CHART } from '../components/charts';
 import { num, pctOf } from '../lib/format';
 import { Icon } from '../components/icons';
@@ -42,12 +42,12 @@ export function Analytics() {
         <a className="btn" href="/api/report" target="_blank" rel="noreferrer"><Icon name="download" size={12} /> READINESS REPORT</a>
       </PageHeader>
 
-      <div className="mb-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="CURRENT AVAILABILITY" value={`${num((fleet.history || []).slice(-1)[0]?.operational, 1)}%`} className="panel px-4 py-3" />
-        <Metric label="REACTIVE POSTURE" value={`${num(a.reactive_avail, 1)}%`} className="panel px-4 py-3" hint="FROM HISTORICAL DOWNTIME" />
-        <Metric label="PREDICTIVE POSTURE" value={`${num(a.predictive_avail, 1)}%`} className="panel px-4 py-3" st={delta >= 0 ? 'ok' : 'crit'} hint="PROJECTED, SIMULATED" />
-        <Metric label="PROJECTED DELTA" value={`${delta >= 0 ? '+' : ''}${num(delta, 1)}%`} className="panel px-4 py-3" st={delta >= 0 ? 'ok' : 'crit'} hint="SIMULATED SCENARIO ONLY" />
-      </div>
+      <MetricGrid cols="grid-cols-2 lg:grid-cols-4" className="mb-3">
+        <Metric label="CURRENT AVAILABILITY" value={`${num((fleet.history || []).slice(-1)[0]?.operational, 1)}%`} />
+        <Metric label="REACTIVE POSTURE" value={`${num(a.reactive_avail, 1)}%`} hint="FROM HISTORICAL DOWNTIME" />
+        <Metric label="PREDICTIVE POSTURE" value={`${num(a.predictive_avail, 1)}%`} st={delta >= 0 ? 'ok' : 'crit'} hint="PROJECTED, SIMULATED" />
+        <Metric label="PROJECTED DELTA" value={`${delta >= 0 ? '+' : ''}${num(delta, 1)}%`} st={delta >= 0 ? 'ok' : 'crit'} hint="SIMULATED SCENARIO ONLY" />
+      </MetricGrid>
 
       <div className="grid gap-3">
         <Panel title="FLEET AVAILABILITY — HISTORY & PROJECTION" sub="30D MEASURED · 30D PROJECTED" icon="chart">
@@ -238,7 +238,7 @@ export function WhatIf() {
         provenance="SIMULATION — NOT A MEASURED RESULT"
       />
 
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(340px,3fr)]">
         <Panel title="SCENARIO INPUTS" icon="gear">
           <div className="grid gap-3">
             {FIELDS.map(([k, label, hint]) => (
@@ -264,10 +264,10 @@ export function WhatIf() {
           )}
           {!err && r && (
             <>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <MetricGrid cols="grid-cols-1 sm:grid-cols-2">
                 <Metric label="SIMULATED AVAILABILITY" value={`${num(r.simulated_availability, 1)}%`} big st={r.simulated_availability >= 70 ? 'ok' : 'alert'} />
                 <Metric label="SIMULATED BACKLOG" value={r.simulated_backlog} big st={r.simulated_backlog > 0 ? 'warn' : 'ok'} hint="OPEN WORK ORDERS" />
-              </div>
+              </MetricGrid>
               <div className="mt-3 border-t border-line pt-2 font-mono text-[9.5px] leading-relaxed tracking-[0.05em] text-txt-faint">
                 {String(r.note || '').toUpperCase()} — THE SIMULATION APPLIES A SIMPLIFIED RESPONSE MODEL TO THE CURRENT SYNTHETIC FLEET STATE.
               </div>

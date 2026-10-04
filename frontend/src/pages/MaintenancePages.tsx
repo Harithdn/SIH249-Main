@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { get, post } from '../services/api';
 import { useSystem } from '../components/SystemContext';
-import { Panel, PageHeader, StatusTag, StateTag, LoadingState, ErrorState, EmptyState, Metric, Segmented, SearchInput } from '../components/ui';
+import { Panel, PageHeader, StatusTag, StateTag, LoadingState, ErrorState, EmptyState, Metric, MetricGrid, Segmented, SearchInput } from '../components/ui';
 import { int, istDate, num } from '../lib/format';
 import { Icon } from '../components/icons';
 
@@ -109,28 +109,26 @@ export function WorkOrders() {
         </div>
       )}
 
-      {/* workflow strip */}
-      <div className="panel mb-3 overflow-x-auto">
-        <div className="flex min-w-[720px] items-stretch divide-x divide-line">
-          <div className="w-[170px] shrink-0 border-r border-line bg-surface2 px-3 py-2.5">
-            <div className="tlabel">MAINTENANCE WORKFLOW</div>
-            <div className="mt-1 font-mono text-[10px] leading-relaxed text-txt-faint">DETECTION → RESOLUTION</div>
-          </div>
-          {STAGES.map((s, i) => (
-            <div key={s} className="flex-1 px-3 py-2.5">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-txt-dim">
-                  <span className="mr-1.5 text-txt-faint">{String(i + 1).padStart(2, '0')}</span>{s.toUpperCase()}
-                </span>
-                <span className="metric-val text-[15px]">{counts[s]}</span>
-              </div>
-              <div className="mt-1.5 h-[3px] bg-line-strong">
-                <div className="h-full" style={{ width: `${counts[s] ? Math.min(100, counts[s] * 25) : 0}%`, background: s === 'Completed' ? '#6FB789' : '#56A8CC' }} />
-              </div>
-              {i < STAGES.length - 1 && <div className="mt-1 font-mono text-[9px] text-txt-faint">↓</div>}
-            </div>
-          ))}
+      {/* workflow strip — wraps on narrow viewports, no internal scrolling */}
+      <div className="panel mb-3 grid grid-cols-2 gap-px overflow-hidden bg-line sm:grid-cols-3 xl:grid-cols-6">
+        <div className="col-span-2 bg-surface2 px-3 py-2.5 sm:col-span-3 xl:col-span-1">
+          <div className="tlabel">MAINTENANCE WORKFLOW</div>
+          <div className="mt-1 font-mono text-[10px] leading-relaxed text-txt-faint">DETECTION → RESOLUTION</div>
         </div>
+        {STAGES.map((s, i) => (
+          <div key={s} className="min-w-0 bg-surface px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="min-w-0 truncate font-mono text-[10px] uppercase tracking-[0.1em] text-txt-dim">
+                <span className="mr-1.5 text-txt-faint">{String(i + 1).padStart(2, '0')}</span>{s.toUpperCase()}
+              </span>
+              <span className="metric-val shrink-0 text-[15px]">{counts[s]}</span>
+            </div>
+            <div className="mt-1.5 h-[3px] bg-line-strong">
+              <div className="h-full" style={{ width: `${counts[s] ? Math.min(100, counts[s] * 25) : 0}%`, background: s === 'Completed' ? '#6FB789' : '#56A8CC' }} />
+            </div>
+            {i < STAGES.length - 1 && <div className="mt-1 font-mono text-[9px] text-txt-faint">↓</div>}
+          </div>
+        ))}
       </div>
 
       {/* create form */}
@@ -280,7 +278,7 @@ export function Schedule() {
         provenance="SLOTS FROM RECOMMENDATION ENGINE · SYNTHETIC"
       />
 
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
         <Panel title="SCHEDULED MAINTENANCE" sub={`${rows.length} ENTRIES`} icon="calendar" bodyClass="p-0">
           {rows.length === 0 ? (
             <div className="p-3"><EmptyState title="NOTHING SCHEDULED" message="No open work orders with a scheduled date. Approve a recommendation to create one." action={<Link className="btn" to="/app/recommendations">MAINTENANCE PLAN →</Link>} /></div>
@@ -359,17 +357,17 @@ export function History() {
         <SearchInput value={q} onChange={setQ} placeholder="SEARCH AIRCRAFT / COMPONENT" />
       </PageHeader>
 
-      <div className="mb-3 grid gap-3 sm:grid-cols-4">
-        <Metric label="MTTR — MEAN TIME TO REPAIR" value={`${num(d.mttr_h, 1)} H`} className="panel px-4 py-3" />
-        <Metric label="MTBF PROXY" value={`${int(d.mtbf_h)} H`} className="panel px-4 py-3" hint="DERIVED FROM RECORD DOWNTIME" />
-        <Metric label="RECORDS" value={int(d.records.length)} className="panel px-4 py-3" />
-        <div className="panel px-4 py-3">
+      <MetricGrid cols="grid-cols-2 lg:grid-cols-4" className="mb-3">
+        <Metric label="MTTR — MEAN TIME TO REPAIR" value={`${num(d.mttr_h, 1)} H`} />
+        <Metric label="MTBF PROXY" value={`${int(d.mtbf_h)} H`} hint="DERIVED FROM RECORD DOWNTIME" />
+        <Metric label="RECORDS" value={int(d.records.length)} />
+        <div>
           <div className="tlabel">BY TYPE</div>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[10.5px] text-txt-dim">
             {Object.entries(byType).map(([t, n]) => <span key={t}>{t.toUpperCase()} <span className="text-txt">{n}</span></span>)}
           </div>
         </div>
-      </div>
+      </MetricGrid>
 
       <Panel title="MAINTENANCE RECORDS" sub={`${records.length} SHOWN`} icon="database" bodyClass="p-0">
         <div className="overflow-x-auto">

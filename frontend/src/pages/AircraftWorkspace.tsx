@@ -7,7 +7,7 @@ import { Link, NavLink, useLocation, useNavigate, useParams } from 'react-router
 import { get } from '../services/api';
 import { useSystem } from '../components/SystemContext';
 import DigitalTwin from '../components/DigitalTwin';
-import { Panel, SectionHeader, StatusTag, StateTag, HealthBar, LoadingState, ErrorState, EmptyState, Metric, ContribBar, NotAvailable, KV } from '../components/ui';
+import { Panel, SectionHeader, StatusTag, StateTag, HealthBar, LoadingState, ErrorState, EmptyState, Metric, MetricGrid, ContribBar, NotAvailable, KV } from '../components/ui';
 import { TelemetryChart, RulChart, CHART } from '../components/charts';
 import { Icon } from '../components/icons';
 import {
@@ -76,54 +76,51 @@ export default function AircraftWorkspace() {
         </div>
 
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="flex items-end gap-4">
+          <div className="flex min-w-0 items-end gap-4">
             <div>
               <h1 className="font-mono text-[26px] font-medium leading-8 tracking-[0.06em] text-txt">{detail.aircraft_id}</h1>
-              <div className="tlabel mt-0.5">{detail.platform} · {detail.base} (FICTIONAL) · {detail.squadron}</div>
+              <div className="tlabel mt-0.5 whitespace-nowrap">{detail.platform} · {detail.base} (FICTIONAL) · {detail.squadron}</div>
             </div>
-            <StatusTag s={detail.status} />
-          </div>
-          <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-txt-faint">
-            LAST UPDATE {sys.lastUpdated ? istTime(sys.lastUpdated.toISOString()) : '—'}
+            <StatusTag s={detail.status} className="mb-1" />
           </div>
         </div>
 
-        {/* metrics information row */}
-        <div className="panel mt-3 flex flex-wrap divide-x divide-line overflow-x-auto">
-          <div className="min-w-[130px] px-4 py-2.5">
+        {/* metrics strip — data freshness is shown once, in the top system bar */}
+        <MetricGrid cols="grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7" className="mt-3">
+          <div>
             <div className="tlabel">HEALTH INDEX</div>
             <div className="metric-val mt-0.5 text-[19px]" style={{ color: stateColor(healthSt) }}>{num(detail.health, 1)}<span className="text-[11px] text-txt-faint"> /100</span></div>
           </div>
-          <div className="min-w-[120px] px-4 py-2.5">
+          <div>
             <div className="tlabel">RUL (MIN)</div>
             <div className="metric-val mt-0.5 text-[19px]" style={{ color: stateColor(rulState(Math.min(...(detail.components || []).map((c: any) => c.rul)))) }}>
               {num(Math.min(...(detail.components || []).map((c: any) => c.rul)), 1)}<span className="ml-1 text-[11px] text-txt-faint">D</span>
             </div>
           </div>
-          <div className="min-w-[130px] px-4 py-2.5">
+          <div>
             <div className="tlabel">FAILURE PROBABILITY</div>
             <div className="metric-val mt-0.5 text-[19px]" style={{ color: stateColor(probState(topPred?.failure_prob ?? 0)) }}>
               {topPred ? pctOf(topPred.failure_prob * 100, 1) : '—'}
             </div>
             <div className="mt-0.5 font-mono text-[9.5px] text-txt-faint">{topPred ? topPred.component.toUpperCase() : 'NO ACTIVE PREDICTION'}</div>
           </div>
-          <div className="min-w-[120px] px-4 py-2.5">
+          <div>
             <div className="tlabel">FLIGHT HOURS</div>
             <div className="metric-val mt-0.5 text-[19px]">{int(detail.flight_hours)}</div>
           </div>
-          <div className="min-w-[100px] px-4 py-2.5">
+          <div>
             <div className="tlabel">CYCLES</div>
             <div className="metric-val mt-0.5 text-[19px]">{int(detail.cycles)}</div>
           </div>
-          <div className="min-w-[130px] px-4 py-2.5">
+          <div>
             <div className="tlabel">LAST MAINTENANCE</div>
             <div className="metric-val mt-0.5 text-[14px]">{istDate(detail.last_maintenance)}</div>
           </div>
-          <div className="min-w-[130px] px-4 py-2.5">
+          <div>
             <div className="tlabel">NEXT MAINTENANCE</div>
             <div className="metric-val mt-0.5 text-[14px]">{istDate(detail.next_maintenance)}</div>
           </div>
-        </div>
+        </MetricGrid>
       </div>
 
       {/* ---------- tabs ---------- */}
@@ -432,7 +429,7 @@ function DiagnosticsTab({ detail, preds }: { detail: any; preds: any[] }) {
       ) : (
         <>
           {/* primary diagnostic: what / severity */}
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
             <Panel title="PREDICTED FAILURE" sub={`PRIMARY RISK COMPONENT · ${aid}`} icon="target">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>

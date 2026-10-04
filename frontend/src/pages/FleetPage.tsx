@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { get } from '../services/api';
 import { useSystem } from '../components/SystemContext';
-import { Panel, PageHeader, SearchInput, Segmented, StatusTag, HealthBar, LoadingState, ErrorState, EmptyState, SortTh, useSort } from '../components/ui';
+import { Panel, PageHeader, MetricGrid, SearchInput, Segmented, StatusTag, HealthBar, LoadingState, ErrorState, EmptyState, SortTh, useSort } from '../components/ui';
 import { int, istDate, num, rulState, stateColor } from '../lib/format';
 
 type Filter = 'ALL' | 'Operational' | 'Maintenance' | 'At Risk' | 'Critical';
@@ -91,19 +91,19 @@ export default function FleetPage() {
         />
       </PageHeader>
 
-      {/* base summary — information row */}
-      <div className="panel mb-3 flex flex-wrap divide-x divide-line overflow-x-auto">
+      {/* base summary — auto-fitting metric strip */}
+      <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(170px,1fr))]" className="mb-3">
         {Object.entries(byBase).map(([base, v]) => (
-          <div key={base} className="min-w-[150px] flex-1 px-4 py-2.5">
+          <div key={base}>
             <div className="tlabel">{base.toUpperCase()} (FICTIONAL)</div>
             <div className="metric-val mt-0.5 text-[15px]">{v.op}<span className="text-[11px] text-txt-faint"> / {v.n} READY</span></div>
           </div>
         ))}
-        <div className="min-w-[150px] flex-1 px-4 py-2.5">
+        <div>
           <div className="tlabel">ACTIVE ALERTS</div>
           <div className="metric-val mt-0.5 text-[15px]" style={{ color: alerts.length ? '#D97070' : undefined }}>{alerts.length}</div>
         </div>
-      </div>
+      </MetricGrid>
 
       <Panel title="AIRCRAFT REGISTRY" sub={`${filtered.length} OF ${rows.length} AIRCRAFT`} icon="aircraft" bodyClass="p-0">
         {filtered.length === 0 ? (

@@ -105,14 +105,14 @@ export function TelemetryChart({ title, unit, current, series, data, xKey, heigh
   xFmt?: (v: any) => string; legend?: React.ReactNode; footer?: React.ReactNode;
 }) {
   return (
-    <div className="panel">
+    <div className="panel min-w-0">
       <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-line px-3 py-1.5">
-        <div className="flex items-baseline gap-2">
-          <span className="font-mono text-[10.5px] font-medium uppercase tracking-[0.1em] text-txt-dim">{title}</span>
-          <span className="tlabel">{unit}</span>
+        <div className="flex min-w-0 items-baseline gap-2">
+          <span className="whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.1em] text-txt-dim">{title}</span>
+          <span className="tlabel whitespace-nowrap">{unit}</span>
         </div>
         {current != null && (
-          <div className="font-mono text-[12px] text-txt num">
+          <div className="ml-auto whitespace-nowrap font-mono text-[12px] text-txt num">
             <span className="tlabel mr-1.5 hidden sm:inline">CUR</span>{current}
           </div>
         )}
@@ -152,7 +152,7 @@ export function RulChart({ history, projection, height = 210 }: { history: any[]
         <ComposedChart data={data} margin={{ top: 8, right: 14, left: 0, bottom: 2 }}>
           <CartesianGrid stroke={CHART.grid} vertical={false} />
           <XAxis dataKey="d" tickLine={false} axisLine={{ stroke: CHART.axis }} minTickGap={30} height={18} interval="preserveStartEnd" />
-          <YAxis tickLine={false} axisLine={false} width={36} label={{ value: 'DAYS', angle: -90, position: 'insideLeft', fill: CHART.tick, fontSize: 9, fontFamily: 'IBM Plex Mono', dx: 10 }} />
+          <YAxis tickLine={false} axisLine={false} width={36} label={{ value: 'DAYS', position: 'insideTopLeft', fill: CHART.tick, fontSize: 9, fontFamily: 'IBM Plex Mono', dx: 44, dy: -2 }} />
           <Tooltip content={<TipBox unit="d" digits={1} />} cursor={{ stroke: CHART.axis, strokeDasharray: '3 3' }} />
           <ReferenceLine y={0} stroke={CHART.crit} strokeDasharray="6 3" strokeWidth={1}
             label={{ value: 'FAILURE THRESHOLD', position: 'insideBottomRight', fill: CHART.crit, fontSize: 9, fontFamily: 'IBM Plex Mono' }} />
@@ -205,7 +205,11 @@ export function ParetoChart({ data, height = 240 }: { data: { component: string;
         <ComposedChart data={data} margin={{ top: 8, right: 14, left: 0, bottom: 2 }}>
           <CartesianGrid stroke={CHART.grid} vertical={false} />
           <XAxis dataKey="component" tickLine={false} axisLine={{ stroke: CHART.axis }} height={32}
-            tickFormatter={(v: string) => v.replace(' System', '').replace('Landing Gear', 'L/G').toUpperCase()} interval={0} />
+            tickFormatter={(v: string) => v
+              .replace(' System', '').replace('Landing Gear', 'L/G')
+              .replace('Hydraulic', 'HYD').replace('hydraulic', 'HYD')
+              .replace('Electrical', 'ELEC').replace('electrical', 'ELEC')
+              .toUpperCase()} interval={0} />
           <YAxis yAxisId="l" tickLine={false} axisLine={false} width={30} allowDecimals={false} />
           <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tickLine={false} axisLine={false} width={38} tickFormatter={(v: any) => `${v}%`} />
           <Tooltip content={<TipBox digits={0} />} cursor={{ fill: '#141C24' }} />

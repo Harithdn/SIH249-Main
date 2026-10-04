@@ -14,7 +14,8 @@ interface SystemCtx {
   setLiveMode: (v: boolean) => void;
   simActive: boolean;                // degradation simulation currently active
   systemStatus: SysStatus;
-  modelLabel: string;
+  modelLabel: string;                // compact version for the system bar (e.g. "V1.4")
+  modelName: string;                 // full registry name (e.g. "Failure Prediction v1.4")
   currentAircraft: string;           // focused tail number
   setCurrentAircraft: (id: string) => void;
   degrade: (aircraftId?: string, component?: string, level?: number) => Promise<void>;
@@ -30,6 +31,7 @@ export function SystemProvider({ children }: { children: React.ReactNode }) {
   const [simActive, setSimActive] = useState(false);
   const [systemStatus, setSystemStatus] = useState<SysStatus>('UNKNOWN');
   const [modelLabel, setModelLabel] = useState('—');
+  const [modelName, setModelName] = useState('—');
   const [currentAircraft, setCurrentAircraftState] = useState(
     () => localStorage.getItem('currentAircraft') || 'AS-014'
   );
@@ -58,9 +60,14 @@ export function SystemProvider({ children }: { children: React.ReactNode }) {
         }
         if (Array.isArray(models) && models.length) {
           const m = models.find((x: any) => x.name === 'Failure Prediction') || models[0];
-          setModelLabel(`${(m.name || '').split(' ')[0].toUpperCase()} ${m.version}`);
+          setModelLabel(String(m.version || '—').toUpperCase());
+          setModelName(`${m.name} ${m.version}`);
         }
         if (sim && typeof sim.live === 'boolean') setSimActive(sim.live);
+        // the shell poll is itself a data fetch — pages that load no data of
+        // their own (e.g. scenario simulation, data upload) still get a real
+        // UPDATED stamp instead of an em-dash.
+        setLastUpdated(new Date());
       } catch { /* status stays as-is */ }
     };
     poll();
@@ -89,7 +96,7 @@ export function SystemProvider({ children }: { children: React.ReactNode }) {
   return (
     <C.Provider value={{
       lastUpdated, markUpdated, refreshKey, bumpRefresh, liveMode, setLiveMode,
-      simActive, systemStatus, modelLabel, currentAircraft, setCurrentAircraft, degrade, resetSim,
+      simActive, systemStatus, modelLabel, modelName, currentAircraft, setCurrentAircraft, degrade, resetSim,
     }}>
       {children}
     </C.Provider>

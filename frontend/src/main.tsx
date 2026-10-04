@@ -9,11 +9,6 @@ import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import './index.css';
 
-// minimal loading progress keyframe (used by LoadingState)
-const style = document.createElement('style');
-style.textContent = '@keyframes prog { 0% { margin-left: -33%; } 100% { margin-left: 100%; } }';
-document.head.appendChild(style);
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
