@@ -82,7 +82,7 @@ export default function CommandCenter() {
             </div>
           </div>
           <Metric label="READY" value={d.operational} st="ok" hint={`HEALTHY ${dist.Healthy ?? '—'}`} />
-          <Metric label="IN MAINTENANCE" value={d.maintenance} st="warn" hint="PLANNED DOWNTIME" />
+          <Metric label="IN MAINT" value={d.maintenance} st="warn" hint="PLANNED DOWNTIME" />
           <Metric label="WARNING" value={d.at_risk} st="alert" hint={`MONITOR ${dist.Monitoring ?? '—'}`} />
           <Metric label="AOG / CRITICAL" value={d.critical} st="crit" hint="ATTENTION REQUIRED" />
           <Metric label="PREDICTED FAILURES 30D" value={d.predicted_30d} st={d.predicted_30d > 0 ? 'alert' : 'ok'} hint="P>50% · RUL≤30D" />
