@@ -1,0 +1,63 @@
+AEROSENTINEL BACKEND AUDIT REPORT
+================================
+
+1. /health endpoint: 404 Not Found - MISSING
+2. /ready endpoint: 404 Not Found - MISSING
+3. /api/dashboard: GET 200 - works, returns fleet KPIs
+4. /api/fleet: GET 200 - works, returns fleet distribution
+5. /api/aircraft: GET 200 - works
+6. /api/predictions: GET 200 - works, returns predictions
+7. /api/anomalies: GET 200 - works
+8. /api/rul: GET 200 - works, returns RUL data
+9. /api/work-orders: GET 200 - works
+10. /api/inventory: GET 200 - works, returns spare part inventory
+11. /api/alerts: GET 200 - works
+12. /api/models/train: POST 200 - works, trains ML models on synthetic data
+13. /api/data/upload: POST 422 - expects multipart file
+14. /api/copilot: GET 200 - works, returns AI copilot answers
+15. /api/simulate/degrade: POST 405 - MISSING or wrong method
+16. /api/simulate/reset: POST 405 - MISSING or wrong method
+17. /api/report: GET 200 - works, returns fleet report
+18. /api/digital-thread: GET 200 - works, returns pipeline steps
+19. /api/models: GET 200 - works, returns model versions
+
+KEY ISSUES TO FIX:
+
+A. /health and /ready endpoints - completely missing, need implementation
+B. /api/simulate/degrade and /api/simulate/reset - return 405, need implementation
+C. Python reproducibility - pandas==2.2.3 and numpy==1.26.4 may cause source build issues on Windows
+D. ML pipeline verification - need to confirm predictions come from actual telemetry + models
+E. Static/KPI values - need to verify they're data-driven not hard-coded
+F. AS-014 degradation flow - need to verify end-to-end reliability
+G. Downtime avoided: hard-coded as 126 hours - needs improvement
+H. Reactive vs predictive KPIs: 78.4 vs 84.7 - need to verify data-driven
+I. Data quality endpoint: returns hard-coded percentages (96.2, 94.7, 88.3, 3.8, 93.1)
+J. Inventory risk calculations - need to verify data-driven
+K. RUL model response to degradation - need to verify logical relationship
+L. Explainability - perturbation-based, needs verification
+M. Low-confidence handling - need to verify advisory labeling
+N. Human-in-the-loop workflow - need to verify approval flow
+O. Inventory ↔ prediction integration - need to verify connection
+P. Technician/scheduling integration - need to verify
+Q. What-if simulation - need to verify parameter affect on results
+R. Model training demo - need to verify CSV upload + train + evaluate flow
+S. TypeScript/Frontend errors - need to verify build passes
+T. Docker - need to verify compose up works
+
+DEPENDENCY VERSIONS:
+- pandas==2.2.3: May cause Windows source build issues ("Could not parse vswhere.exe output")
+- numpy==1.26.4: Same issue
+- scikit-learn==1.5.2: Should be compatible with Python 3.11
+- fastapi==0.115.6: Latest, should be fine
+- sqlalchemy==2.0.36: Latest, should be fine
+
+REPRODUCIBILITY CONCERNS:
+- seed Random(26249) used in seed_if_empty() - good for reproducibility
+- DEGRADE dict used for AS-014 degradation tracking
+- Randomness in telemetry generation may need seeding
+
+SEMI-HARDCODED VALUES:
+- "downtime_avoided_h": 126 in dashboard() - acknowledged as static
+- "reactive_avail": 78.4, "predictive_avail": 84.7 in analytics() - labeled as simulated
+- data_quality(): returns 96.2, 94.7, 88.3, 3.8, 93.1 - hard-coded percentages
+- Various rng.uniform() calls without fixed seeds in some paths

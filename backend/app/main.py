@@ -453,8 +453,9 @@ def dashboard(s: Session = Depends(db)):
             hi += 1
     mttr = s.query(func.avg(MaintenanceRecord.downtime_h)).scalar() or 8.0
     return {"fleet_size": total, "operational": op, "maintenance": maint, "at_risk": risk,
-            "critical": crit, "availability": avail, "predicted_30d": hi or preds or 14,
-            "downtime_avoided_h": 126, "backlog": backlog, "mttr": round(float(mttr), 1)}
+            "critical": crit, "availability": avail, "predicted_30d": hi or preds or 0,
+            "downtime_avoided_h": round(preds * float(mttr), 1), "backlog": backlog, "mttr": round(float(mttr), 1),
+            "note": "Downtime avoided is a simulated estimate — not a measured real-world result."}
 
 @app.get("/api/fleet")
 def fleet(s: Session = Depends(db)):
@@ -851,13 +852,26 @@ def analytics(s: Session = Depends(db)):
         run += p["failures"]; p["cum_pct"] = round(run / tot * 100, 1)
     recs = s.query(MaintenanceRecord).all()
     mttr = round(float(np.mean([r.downtime_h for r in recs])) if recs else 8.2, 1)
+    # DB-calculated reactive availability: based on historical maintenance downtime
+    total = s.query(Aircraft).count()  # total aircraft fleet size
+    if recs:
+        total_downtime = sum(r.downtime_h or 0 for r in recs)
+        total_days = max(1, (datetime.now() - min(r.date for r in recs)).days)
+        reactive_avail = round(max(0, 100 * (1 - total_downtime / (total * 24 * total_days))), 1)
+    else:
+        reactive_avail = 100.0
+
+    # DB-calculated predictive availability: based on predicted failures
+    preds = s.query(Prediction).filter(Prediction.failure_probability > 0.5).count()
+    avg_flight_hours = s.query(func.avg(Aircraft.flight_hours)).scalar() or 2000
+    total_fleet_hours = total * float(avg_flight_hours)
+    predicted_downtime_h = preds * float(mttr)
+    predictive_avail = round(max(0, 100 - predicted_downtime_h / total_fleet_hours * 100), 1) if total else 100.0
+
     return {"pareto": pareto, "mttr": mttr, "mtbf": 240,
             "availability_trend": fleet(s)["history"],
-            "reactive_avail": 78.4, "predictive_avail": 84.7,
-            "note": "Projected improvement in simulated scenario — not a measured real-world result."}
-
-@app.get("/api/insights")
-def insights(s: Session = Depends(db)):
+            "reactive_avail": reactive_avail, "predictive_avail": predictive_avail,
+            "note": "Projected improvement in simulated scenario - not a measured real-world result."}
     preds = predictions(0.5, s)
     items = []
     if preds:
@@ -952,10 +966,59 @@ def digital_thread(aid: str = "AS-014", s: Session = Depends(db)):
 # ---- data quality / system / models / upload / report ----
 @app.get("/api/data-quality")
 def data_quality(s: Session = Depends(db)):
+    from sqlalchemy import func
+    from datetime import datetime, timedelta
+    
+    # Total sensor readings
     n = s.query(SensorReading).count()
-    return {"telemetry_completeness": 96.2, "sensor_reliability": 94.7,
-            "record_completeness": 88.3, "readings": n, "stale_feeds": 1,
-            "missing_pct": 3.8, "score": 93.1}
+    
+    # Telemetry completeness: % of readings with valid temperature, vibration, pressure
+    total_with_valid = s.query(SensorReading).filter(
+        SensorReading.temperature.isnot(None),
+        SensorReading.vibration.isnot(None),
+        SensorReading.pressure.isnot(None)
+    ).count()
+    telemetry_completeness = round(total_with_valid / max(1, n) * 100, 1)
+    
+    # Missing percentage: % of readings with any missing critical field
+    from sqlalchemy import or_
+    missing = s.query(SensorReading).filter(
+        or_(SensorReading.temperature == None,
+            SensorReading.vibration == None,
+            SensorReading.pressure == None)
+    ).count()
+    missing_pct = round(missing / max(1, n) * 100, 1)
+    
+    # Sensor reliability: % of recent readings within valid ranges
+    valid_range_count = s.query(SensorReading).filter(
+        SensorReading.temperature.between(800, 3500),
+        SensorReading.vibration.between(0.5, 10.0),
+        SensorReading.pressure.between(2500, 3500)
+    ).count()
+    sensor_reliability = round(valid_range_count / max(1, n) * 100, 1)
+    
+    # Record completeness: % of readings with all fields populated
+    all_fields = s.query(SensorReading).filter(
+        SensorReading.temperature.isnot(None) &
+        SensorReading.vibration.isnot(None) &
+        SensorReading.pressure.isnot(None) &
+        SensorReading.rpm.isnot(None) &
+        SensorReading.voltage.isnot(None) &
+        SensorReading.fuel_flow.isnot(None)
+    ).count()
+    record_completeness = round(all_fields / max(1, n) * 100, 1)
+    
+    # Stale feeds: readings older than 24 hours
+    one_day_ago = datetime.now() - timedelta(days=1)
+    stale_count = s.query(SensorReading).filter(SensorReading.timestamp < one_day_ago).count()
+    stale_feeds = stale_count
+    
+    # Overall quality score (weighted average)
+    score = round((telemetry_completeness * 0.4 + sensor_reliability * 0.3 + record_completeness * 0.3), 1)
+    
+    return {"telemetry_completeness": telemetry_completeness, "sensor_reliability": sensor_reliability,
+            "record_completeness": record_completeness, "readings": n, "stale_feeds": stale_feeds,
+            "missing_pct": missing_pct, "score": score}
 
 @app.get("/api/system-health")
 def system_health():
@@ -1029,6 +1092,125 @@ def whatif(b: Dict[str, Any], s: Session = Depends(db)):
     sim_av = round(max(50, min(97, base + cap * 0.3 + tech * 0.2 - float(b.get("delay", 0)) * 0.4)), 1)
     return {"simulated_availability": sim_av, "simulated_backlog": max(0, d["backlog"] + int(-cap / 10)),
             "note": "Simulation — not a measured real-world result."}
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint."""
+    db_ok = False
+    ml_ok = False
+    try:
+        from sqlalchemy import create_engine, inspect as sql_inspect
+        engine = create_engine(os.getenv("DATABASE_URL", "sqlite:///./aerosentinel.db"))
+        with engine.connect() as conn:
+            sql_inspect(conn)
+        db_ok = True
+    except Exception:
+        db_ok = False
+
+    # ML models should be loaded
+    global ML
+    ml_ok = ML is not None and "clf" in ML and "iso" in ML
+
+    # Check synthetic data availability
+    from sqlalchemy.orm import sessionmaker
+    from app.database import SessionLocal
+    s = SessionLocal()
+    try:
+        data_ok = s.query(app.Aircraft).count() > 0
+    except Exception:
+        data_ok = False
+    finally:
+        s.close()
+
+    status = "healthy" if db_ok and ml_ok and data_ok else "degraded"
+    db_str = "connected" if db_ok else "disconnected"
+    ml_str = "ready" if ml_ok else "loading"
+    data_str = "ready" if data_ok else "seeding"
+
+    return {
+        "status": status,
+        "service": "aerosentinel",
+        "version": "1.0.0",
+        "database": db_str,
+        "ml": ml_str,
+        "simulation": data_str
+    }
+
+@app.get("/ready")
+def ready_check():
+    """Readiness check - verifies all subsystems are operational."""
+    # Database availability
+    db_ok = False
+    try:
+        from sqlalchemy import create_engine
+        engine = create_engine(os.getenv("DATABASE_URL", "sqlite:///./aerosentinel.db"))
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+        db_ok = True
+    except Exception:
+        db_ok = False
+
+    # ML model availability
+    ml_ok = False
+    global ML
+    if ML is not None and "clf" in ML and "iso" in ML and ML.get("trained", False):
+        ml_ok = True
+
+    # Synthetic data availability
+    data_ok = False
+    from sqlalchemy.orm import sessionmaker
+    from app.database import SessionLocal
+    s = SessionLocal()
+    try:
+        count = s.query(app.Aircraft).count()
+        # Check at least one aircraft with components
+        comp_count = s.query(app.Component).count()
+        data_ok = count > 0 and comp_count > 0
+    except Exception:
+        data_ok = False
+    finally:
+        s.close()
+
+    # If any subsystem is unavailable, return not-ready state
+    if not db_ok:
+        return {
+            "status": "not_ready",
+            "service": "aerosentinel",
+            "version": "1.0.0",
+            "database": "disconnected",
+            "ml": "not_ready",
+            "simulation": "not_ready",
+            "detail": "Database unavailable"
+        }
+    if not ml_ok:
+        return {
+            "status": "not_ready",
+            "service": "aerosentinel",
+            "version": "1.0.0",
+            "database": "connected",
+            "ml": "not_ready",
+            "simulation": "not_ready",
+            "detail": "ML models not trained or loaded"
+        }
+    if not data_ok:
+        return {
+            "status": "not_ready",
+            "service": "aerosentinel",
+            "version": "1.0.0",
+            "database": "connected",
+            "ml": "ready",
+            "simulation": "not_ready",
+            "detail": "Synthetic data not available - run seed"
+        }
+
+    return {
+        "status": "ready",
+        "service": "aerosentinel",
+        "version": "1.0.0",
+        "database": "connected",
+        "ml": "ready",
+        "simulation": "ready"
+    }
 
 @app.get("/api/audit")
 def audit_list(s: Session = Depends(db)):
