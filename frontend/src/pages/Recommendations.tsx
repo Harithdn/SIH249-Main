@@ -32,7 +32,7 @@ export default function Recommendations() {
         provenance="AI RECOMMENDATION · HUMAN APPROVAL REQUIRED"
       />
 
-      <MetricGrid cols="grid-cols-1 sm:grid-cols-3" className="mb-3">
+      <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(min(190px,100%),1fr))]" className="mb-3">
         <Metric label="OPEN RECOMMENDATIONS" value={rows.length} st={rows.length ? 'warn' : 'ok'} />
         <Metric label="CRITICAL PRIORITY" value={rows.filter((r) => r.priority === 'Critical').length} st="crit" />
         <Metric label="TOTAL ESTIMATED EFFORT" value={`${rows.reduce((s, r) => s + (r.est_hours || 0), 0)} H`} />
@@ -44,7 +44,7 @@ export default function Recommendations() {
         </Panel>
       ) : (
         <Panel title="RECOMMENDATION QUEUE" sub="ORDERED BY PRIORITY" icon="clipboard" bodyClass="p-0">
-          <div className="overflow-x-auto">
+          <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="dt">
               <thead>
                 <tr><th>PRIORITY</th><th>AIRCRAFT</th><th>COMPONENT</th><th>RECOMMENDED ACTION</th><th>PARTS</th><th>EST HRS</th><th>TECHNICIAN</th><th>SLOT</th><th>CONFIDENCE</th><th>BASIS</th><th></th></tr>
@@ -58,13 +58,13 @@ export default function Recommendations() {
                     <td><StatusTag s={r.priority} /></td>
                     <td className="mono">{r.aircraft_id}</td>
                     <td className="text-txt">{r.component}</td>
-                    <td style={{ whiteSpace: 'normal' }} className="max-w-[280px]">{r.action}</td>
+                    <td className="wrap-sm">{r.action}</td>
                     <td>{(r.parts || []).join(', ') || '—'}</td>
                     <td className="mono">{r.est_hours} H</td>
                     <td>{r.technician}</td>
                     <td className="mono">{istDate(r.slot)}</td>
                     <td className="mono">{pctOf(r.confidence * 100, 0)}</td>
-                    <td style={{ whiteSpace: 'normal' }} className="max-w-[260px] text-[11px] text-txt-faint">{r.reason}</td>
+                    <td className="wrap-sm text-[11px] text-txt-faint">{r.reason}</td>
                     <td>
                       <Link className="btn btn-xs btn-primary" to={`/app/work-orders?pre=${r.aircraft_id}:${encodeURIComponent(r.component)}&tech=${encodeURIComponent(r.technician)}&parts=${encodeURIComponent((r.parts || []).join(','))}&hours=${r.est_hours}`}>
                         <Icon name="wrench" size={10} /> CREATE WO

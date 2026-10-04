@@ -9,12 +9,12 @@ import { Icon, type IconName } from './icons';
 export function PageHeader({ title, sub, provenance, children }: { title: string; sub?: string; provenance?: string; children?: React.ReactNode }) {
   return (
     <div className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-3 border-b border-line pb-3">
-      <div className="min-w-0">
-        <h1 className="font-mono text-[15px] font-semibold uppercase tracking-[0.14em] text-txt">{title}</h1>
+      <div className="min-w-0 flex-1 basis-[260px]">
+        <h1 className="break-words font-mono text-[15px] font-semibold uppercase leading-snug tracking-[0.14em] text-txt">{title}</h1>
         {sub && <div className="mt-1 max-w-3xl text-[12px] leading-relaxed text-txt-dim">{sub}</div>}
         {provenance && <div className="provenance mt-1.5">{provenance}</div>}
       </div>
-      {children && <div className="flex max-w-full flex-wrap items-center gap-2">{children}</div>}
+      {children && <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">{children}</div>}
     </div>
   );
 }
@@ -25,13 +25,13 @@ export function Panel({ title, sub, right, children, className = '', bodyClass =
   className?: string; bodyClass?: string; icon?: IconName;
 }) {
   return (
-    <section className={`panel min-w-0 ${className}`}>
+    <section className={`panel min-w-0 ${className}`} aria-label={title}>
       {title && (
         <header className="panel-head">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5">
             {icon && <Icon name={icon} size={13} className="shrink-0 text-txt-faint" />}
             <span className="panel-title">{title}</span>
-            {sub && <span className="tlabel whitespace-nowrap">{sub}</span>}
+            {sub && <span className="tlabel min-w-0 break-words">{sub}</span>}
           </div>
           {right && <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2">{right}</div>}
         </header>
@@ -44,8 +44,8 @@ export function Panel({ title, sub, right, children, className = '', bodyClass =
 /* ---------------- Section header (inside a panel body) ---------------- */
 export function SectionHeader({ title, right, className = '' }: { title: string; right?: React.ReactNode; className?: string }) {
   return (
-    <div className={`mb-2 flex items-center justify-between gap-3 ${className}`}>
-      <span className="tlabel tlabel-dim">{title}</span>
+    <div className={`mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 ${className}`}>
+      <span className="tlabel tlabel-dim min-w-0 break-words">{title}</span>
       {right}
     </div>
   );
@@ -80,24 +80,28 @@ export function Metric({ label, value, unit, hint, st, big = false, className = 
 }) {
   const c = st ? stateColor(st) : undefined;
   return (
-    <div className={className}>
+    <div className={`min-w-0 ${className}`}>
       <div className="tlabel">{label}</div>
-      <div className={`metric-val mt-0.5 ${big ? 'text-[30px] leading-9' : 'text-[17px] leading-6'}`} style={c ? { color: c } : undefined}>
+      <div className={`metric-val mt-0.5 ${big ? 'text-[30px] leading-[1.15]' : 'text-[17px] leading-[1.3]'}`} style={c ? { color: c } : undefined}>
         {value}
         {unit && <span className="ml-1 text-[11px] font-normal text-txt-faint">{unit}</span>}
       </div>
-      {hint && <div className="mt-0.5 font-mono text-[10.5px] text-txt-faint">{hint}</div>}
+      {hint && <div className="mt-0.5 break-words font-mono text-[10.5px] leading-snug text-txt-faint">{hint}</div>}
     </div>
   );
 }
 
 /**
  * Metric strip — CSS grid of metric cells separated by hairline dividers.
- * Cells wrap responsively at lower breakpoints; no cell can overlap or be
- * squeezed (each gets an independent content area via min-width: 0).
- * `cols` overrides the default responsive column template.
+ *
+ * The default template is intrinsic (`auto-fit` + `minmax`), so the number of
+ * columns follows the available width rather than a breakpoint guess: cells
+ * can never be squeezed past their minimum and therefore can never collide,
+ * at any viewport size or with any content length. Every cell is its own
+ * `min-width: 0` grid item, so long labels/values wrap inside the cell.
+ * `cols` overrides the template where a page needs an explicit rhythm.
  */
-export function MetricGrid({ children, cols = 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6', className = '' }: {
+export function MetricGrid({ children, cols = 'grid-cols-[repeat(auto-fit,minmax(min(150px,100%),1fr))]', className = '' }: {
   children: React.ReactNode; cols?: string; className?: string;
 }) {
   return (
@@ -115,8 +119,8 @@ export function HealthBar({ value, width = 110, showValue = true, className = ''
   const st = value == null ? 'off' : value >= 80 ? 'ok' : value >= 65 ? 'warn' : value >= 50 ? 'alert' : 'crit';
   const c = stateColor(st as State);
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <div className="h-[7px] border border-line-strong bg-inset" style={{ width }} role="img" aria-label={`health ${v}`}>
+    <div className={`flex min-w-0 items-center gap-2 ${className}`}>
+      <div className="h-[7px] shrink border border-line-strong bg-inset" style={{ width, maxWidth: '100%' }} role="img" aria-label={`health ${v}`}>
         <div className="h-full" style={{ width: `${v}%`, background: c }} />
       </div>
       {showValue && <span className="font-mono text-[11.5px] text-txt num">{v.toFixed(1)}</span>}
@@ -127,8 +131,8 @@ export function HealthBar({ value, width = 110, showValue = true, className = ''
 /** Contribution / share bar with a leading label. */
 export function ContribBar({ label, pct, color = '#56A8CC' }: { label: string; pct: number; color?: string }) {
   return (
-    <div className="grid grid-cols-[150px_1fr_52px] items-center gap-2 py-[3px]">
-      <span className="truncate text-[11.5px] text-txt-dim">{label}</span>
+    <div className="grid grid-cols-[minmax(0,120px)_minmax(40px,1fr)_minmax(0,52px)] items-center gap-2 py-[3px] sm:grid-cols-[minmax(0,150px)_minmax(40px,1fr)_minmax(0,52px)]">
+      <span className="truncate text-[11.5px] text-txt-dim" title={label}>{label}</span>
       <div className="h-[8px] border border-line-strong bg-inset">
         <div className="h-full" style={{ width: `${Math.max(0, Math.min(100, pct))}%`, background: color }} />
       </div>
@@ -138,6 +142,22 @@ export function ContribBar({ label, pct, color = '#56A8CC' }: { label: string; p
 }
 
 /* ---------------- Table helpers ---------------- */
+
+/**
+ * Horizontal scroll container for data tables.
+ * Dense operational tables are wider than narrow viewports; scrolling is
+ * constrained to the table itself so the PAGE never scrolls sideways.
+ * Keyboard users can reach the scroll area (tabIndex 0) — required for
+ * scrollable regions to be operable without a pointer.
+ */
+export function TableScroll({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`tablewrap ${className}`} tabIndex={0} role="region" aria-label="Scrollable table">
+      {children}
+    </div>
+  );
+}
+
 export function SortTh<T extends string>({ col, sort, setSort, children, align = 'left' }: {
   col: T; sort: { by: T; dir: 1 | -1 }; setSort: (by: T) => void; children: React.ReactNode; align?: 'left' | 'right';
 }) {
@@ -230,7 +250,7 @@ export function Segmented<T extends string>({ options, value, onChange, ariaLabe
   );
 }
 
-export function SearchInput({ value, onChange, placeholder = 'SEARCH', className = 'w-56' }: {
+export function SearchInput({ value, onChange, placeholder = 'SEARCH', className = 'w-full min-w-0 sm:w-56' }: {
   value: string; onChange: (v: string) => void; placeholder?: string; className?: string;
 }) {
   return (

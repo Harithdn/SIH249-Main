@@ -107,8 +107,8 @@ export function TelemetryChart({ title, unit, current, series, data, xKey, heigh
   return (
     <div className="panel min-w-0">
       <div className="flex min-h-[34px] flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-line px-3 py-1.5">
-        <div className="flex min-w-0 items-baseline gap-2">
-          <span className="whitespace-nowrap font-mono text-[10.5px] font-medium uppercase tracking-[0.1em] text-txt-dim">{title}</span>
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="min-w-0 break-words font-mono text-[10.5px] font-medium uppercase leading-snug tracking-[0.1em] text-txt-dim">{title}</span>
           <span className="tlabel whitespace-nowrap">{unit}</span>
         </div>
         {current != null && (

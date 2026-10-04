@@ -12,8 +12,7 @@ import { TelemetryChart, RulChart, CHART } from '../components/charts';
 import { Icon } from '../components/icons';
 import {
   clockOnly, compShort, healthState, int, istDate, istTime, num, pctOf, probState,
-  rulState, SENSOR_SPEC, stateColor, deviation, parseTs, istDateTime,
-} from '../lib/format';
+  rulState, SENSOR_SPEC, stateColor, deviation, parseTs, istDateTime, istClock } from '../lib/format';
 
 /* =================== workspace shell =================== */
 export default function AircraftWorkspace() {
@@ -76,17 +75,17 @@ export default function AircraftWorkspace() {
         </div>
 
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="flex min-w-0 items-end gap-4">
+          <div className="flex min-w-0 flex-wrap items-end gap-x-4 gap-y-2">
             <div>
-              <h1 className="font-mono text-[26px] font-medium leading-8 tracking-[0.06em] text-txt">{detail.aircraft_id}</h1>
-              <div className="tlabel mt-0.5 whitespace-nowrap">{detail.platform} · {detail.base} (FICTIONAL) · {detail.squadron}</div>
+              <h1 className="break-words font-mono text-[26px] font-medium leading-[1.2] tracking-[0.06em] text-txt">{detail.aircraft_id}</h1>
+              <div className="tlabel mt-0.5 break-words">{detail.platform} · {detail.base} (FICTIONAL) · {detail.squadron}</div>
             </div>
             <StatusTag s={detail.status} className="mb-1" />
           </div>
         </div>
 
         {/* metrics strip — data freshness is shown once, in the top system bar */}
-        <MetricGrid cols="grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7" className="mt-3">
+        <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(min(150px,100%),1fr))]" className="mt-3">
           <div>
             <div className="tlabel">HEALTH INDEX</div>
             <div className="metric-val mt-0.5 text-[19px]" style={{ color: stateColor(healthSt) }}>{num(detail.health, 1)}<span className="text-[11px] text-txt-faint"> /100</span></div>
@@ -163,7 +162,7 @@ function OverviewTab({ detail, preds }: { detail: any; preds: any[] }) {
     <div className="grid gap-3">
       {/* subsystem health matrix */}
       <Panel title="SUBSYSTEM HEALTH MATRIX" sub="LIVE MODEL ESTIMATES PER COMPONENT" icon="engine" bodyClass="p-0">
-        <div className="overflow-x-auto">
+        <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="dt">
             <thead>
               <tr><th>SUBSYSTEM</th><th>HEALTH</th><th>STATE</th><th>RUL</th><th>P(FAIL)</th><th>OP HOURS</th><th>MAINT COUNT</th><th>LAST INSPECTION</th><th></th></tr>
@@ -206,7 +205,7 @@ function OverviewTab({ detail, preds }: { detail: any; preds: any[] }) {
                 <span className="block h-[9px] w-[9px] border border-acc bg-inset" />
               </span>
               <span className="tlabel absolute left-3 top-1">EARLIEST RECORD</span>
-              <span className="tlabel absolute right-3 top-1">NOW · HEALTH {num(detail.health, 1)}</span>
+              <span className="tlabel absolute right-3 top-1 hidden sm:block">NOW · HEALTH {num(detail.health, 1)}</span>
               <span className="tlabel absolute bottom-1 left-3">{istDate(timeline[0]?.date)}</span>
               <span className="tlabel absolute bottom-1 right-3">{istDate(new Date().toISOString())}</span>
             </div>
@@ -240,7 +239,7 @@ function OverviewTab({ detail, preds }: { detail: any; preds: any[] }) {
         {preds.filter((p) => p.failure_prob > 0.35).length === 0 ? (
           <div className="p-3"><EmptyState title="NO ELEVATED RISK" message="All component failure probabilities are below the monitoring threshold (35%)." hint="CONTINUE STANDARD MONITORING" /></div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="dt">
               <thead><tr><th>COMPONENT</th><th>P(FAIL)</th><th>SEVERITY</th><th>RUL</th><th>WINDOW</th><th>CONF</th><th>ANOMALY</th><th>RECOMMENDATION</th><th></th></tr></thead>
               <tbody>
@@ -253,7 +252,7 @@ function OverviewTab({ detail, preds }: { detail: any; preds: any[] }) {
                     <td className="mono">{p.window}</td>
                     <td className="mono">{pctOf(p.confidence * 100, 0)}</td>
                     <td className="mono">{num(p.anomaly, 2)}</td>
-                    <td style={{ whiteSpace: 'normal' }} className="max-w-[300px]">{p.recommendation}</td>
+                    <td className="wrap">{p.recommendation}</td>
                     <td><Link className="link font-mono text-[10px]" to={`/app/aircraft/${detail.aircraft_id}/diagnostics`}>REASONING →</Link></td>
                   </tr>
                 ))}
@@ -307,7 +306,7 @@ function TelemetryTab({ aid }: { aid: string }) {
         <div className="seg">
           {[1, 6, 24, 48].map((h) => <button key={h} className={hours === h ? 'on' : ''} onClick={() => setHours(h)}>{h}H</button>)}
         </div>
-        <span className="ml-auto font-mono text-[10px] text-txt-faint">{data.length} SAMPLES</span>
+        <span className="ml-auto whitespace-nowrap font-mono text-[10px] text-txt-faint">{data.length} SAMPLES</span>
       </div>
 
       {err && <ErrorState title="TELEMETRY UNAVAILABLE" message={`Unable to retrieve telemetry for ${aid}.`} detail={err} onRetry={() => sys.bumpRefresh()} />}
@@ -321,7 +320,7 @@ function TelemetryTab({ aid }: { aid: string }) {
             <>
               {/* actual vs expected summary */}
               <Panel title="ACTUAL VS EXPECTED" sub="LATEST SAMPLE AGAINST LEARNED BASELINE" icon="activity" bodyClass="p-0">
-                <div className="overflow-x-auto">
+                <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
                   <table className="dt">
                     <thead><tr><th>CHANNEL</th><th>UNIT</th><th>EXPECTED</th><th>ACTUAL</th><th>DEVIATION</th><th>THRESHOLD STATE</th></tr></thead>
                     <tbody>
@@ -429,7 +428,7 @@ function DiagnosticsTab({ detail, preds }: { detail: any; preds: any[] }) {
       ) : (
         <>
           {/* primary diagnostic: what / severity */}
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)]">
             <Panel title="PREDICTED FAILURE" sub={`PRIMARY RISK COMPONENT · ${aid}`} icon="target">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -443,7 +442,7 @@ function DiagnosticsTab({ detail, preds }: { detail: any; preds: any[] }) {
                     {top.low_confidence && <StateTag st="warn" label="LOW CONFIDENCE — ADDITIONAL TELEMETRY RECOMMENDED" />}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(130px,100%),1fr))] gap-x-6 gap-y-2 sm:min-w-[280px]">
                   <Metric label="PROBABILITY" value={pctOf(top.failure_prob * 100, 1)} st={probState(top.failure_prob)} />
                   <Metric label="RUL" value={`${num(top.rul, 1)} D`} st={rulState(top.rul)} hint={`WINDOW ${top.window}`} />
                   <Metric label="MODEL CONFIDENCE" value={pctOf(top.confidence * 100, 0)} />
@@ -476,7 +475,7 @@ function DiagnosticsTab({ detail, preds }: { detail: any; preds: any[] }) {
             right={<span className="font-mono text-[10px] text-txt-faint">EXPECTED RANGE {top.window}</span>}>
             {rulMatch ? (
               <>
-                <div className="mb-2 grid grid-cols-2 gap-x-8 border-b border-line pb-2 sm:grid-cols-4">
+                <div className="mb-2 grid grid-cols-[repeat(auto-fit,minmax(min(140px,100%),1fr))] gap-x-6 gap-y-2 border-b border-line pb-2">
                   <Metric label="CURRENT RUL" value={`${num(rulMatch.rul, 1)} D`} st={rulState(rulMatch.rul)} />
                   <Metric label="EXPECTED RANGE" value={`${num(rulMatch.lo, 1)}–${num(rulMatch.hi, 1)} D`} hint={`CONFIDENCE ${pctOf(rulMatch.confidence * 100, 0)}`} />
                   <Metric label="DEGRADATION" value={pctOf(rulMatch.degradation, 1)} st={rulMatch.degradation > 40 ? 'alert' : rulMatch.degradation > 25 ? 'warn' : 'ok'} />
@@ -501,9 +500,9 @@ function DiagnosticsTab({ detail, preds }: { detail: any; preds: any[] }) {
       {/* anomalies for this aircraft */}
       <Panel title="ANOMALY DETECTION" sub={`ACTIVE ANOMALIES · ${aid}`} icon="alert" bodyClass="p-0">
         {anoms.length === 0 ? (
-          <div className="p-3"><EmptyState title="NO ACTIVE ANOMALIES" message="No sensor channel on this aircraft currently exceeds the anomaly threshold." hint={`LAST CHECK ${istTime(new Date().toISOString())}`} /></div>
+          <div className="p-3"><EmptyState title="NO ACTIVE ANOMALIES" message="No sensor channel on this aircraft currently exceeds the anomaly threshold." hint={`LAST CHECK ${(sys.lastUpdated ? istClock(sys.lastUpdated) : '—')}`} /></div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="dt">
               <thead><tr><th>TIME</th><th>COMPONENT</th><th>SENSOR</th><th>VALUE</th><th>EXPECTED</th><th>DEVIATION</th><th>SCORE</th><th>SEVERITY</th><th>ASSESSMENT</th></tr></thead>
               <tbody>
@@ -517,7 +516,7 @@ function DiagnosticsTab({ detail, preds }: { detail: any; preds: any[] }) {
                     <td className="mono">{a.deviation > 0 ? '+' : ''}{num(a.deviation, 1)}%</td>
                     <td className="mono">{num(a.score, 2)}</td>
                     <td><StateTag st={a.severity === 'HIGH' ? 'crit' : a.severity === 'MEDIUM' ? 'alert' : 'warn'} label={a.severity} /></td>
-                    <td style={{ whiteSpace: 'normal' }} className="max-w-[380px] text-[11.5px]">{a.assessment}</td>
+                    <td className="wrap text-[11.5px]">{a.assessment}</td>
                   </tr>
                 ))}
               </tbody>

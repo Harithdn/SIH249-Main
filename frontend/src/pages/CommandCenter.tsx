@@ -8,7 +8,7 @@ import { useSystem } from '../components/SystemContext';
 import { Panel, PageHeader, Metric, MetricGrid, StatusTag, StateTag, LoadingState, ErrorState, EmptyState } from '../components/ui';
 import { AvailabilityChart } from '../components/charts';
 import { Icon } from '../components/icons';
-import { num, pctOf, probState, rulState, stateColor, istTime } from '../lib/format';
+import { num, pctOf, probState, rulState, stateColor, istTime, istClock } from '../lib/format';
 
 const STATUS_ORDER = ['Critical', 'At Risk', 'Maintenance', 'Operational'];
 
@@ -71,10 +71,10 @@ export default function CommandCenter() {
       {/* ---------------- SECTION 1 · FLEET READINESS ---------------- */}
       <div className="mb-3">
         <div className="mb-1.5 tlabel tlabel-dim">SECTION 01 — FLEET READINESS</div>
-        <MetricGrid cols="grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-[minmax(210px,1.4fr)_repeat(6,minmax(96px,1fr))]">
+        <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(min(158px,100%),1fr))]">
           <div>
             <Metric label="FLEET READINESS" value={<span>{num(readiness, 1)}<span className="text-[16px]">%</span></span>} st={readiness >= 75 ? 'ok' : readiness >= 60 ? 'warn' : 'alert'} />
-            <div className="mt-1 font-mono text-[10px] leading-relaxed text-txt-faint">
+            <div className="mt-1 break-words font-mono text-[10px] leading-relaxed text-txt-faint">
               {d.operational} / {d.fleet_size} OPERATIONAL · MTTR {num(d.mttr, 1)} H
             </div>
           </div>
@@ -88,7 +88,7 @@ export default function CommandCenter() {
       </div>
 
       {/* ---------------- SECTION 2 + 3 ---------------- */}
-      <div className="mb-3 grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(340px,1fr)]">
+      <div className="mb-3 grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         {/* fleet status board */}
         <Panel title="SECTION 02 — FLEET STATUS BOARD" sub="SELECT AIRCRAFT TO OPEN WORKSPACE" icon="aircraft">
           <div className="space-y-3">
@@ -100,7 +100,7 @@ export default function CommandCenter() {
                     {list.filter((a) => a.status === 'Operational').length}/{list.length} READY
                   </span>
                 </div>
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(64px,1fr))] gap-1">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(min(68px,100%),1fr))] gap-1">
                   {list.map((a) => {
                     const st = a.status === 'Operational' ? 'ok' : a.status === 'Maintenance' ? 'warn' : a.status === 'At Risk' ? 'alert' : 'crit';
                     const c = stateColor(st as any);
@@ -129,10 +129,14 @@ export default function CommandCenter() {
         </Panel>
 
         {/* active events */}
-        <Panel title="SECTION 03 — ACTIVE EVENTS" sub="CURRENT ALERTS BY SEVERITY" icon="alert" bodyClass="p-0">
-          <div className="max-h-[330px] overflow-y-auto">
+        {/* The feed fills the row height set by the status board and scrolls
+            internally only when the two panels sit side by side; stacked, it
+            renders in full and the page remains the single scroll owner. */}
+        <Panel title="SECTION 03 — ACTIVE EVENTS" sub="CURRENT ALERTS BY SEVERITY" icon="alert"
+          className="flex flex-col" bodyClass="flex min-h-0 flex-1 flex-col p-0">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {alerts.length === 0 ? (
-              <div className="p-3"><EmptyState title="NO ACTIVE ALERTS" message="No aircraft currently require immediate attention." hint={`LAST CHECKED ${istTime(new Date().toISOString())}`} /></div>
+              <div className="p-3"><EmptyState title="NO ACTIVE ALERTS" message="No aircraft currently require immediate attention." hint={`LAST CHECKED ${(sys.lastUpdated ? istClock(sys.lastUpdated) : '—')}`} /></div>
             ) : alerts.slice(0, 7).map((a, i) => {
               const st = a.severity === 'Critical' ? 'crit' : a.severity === 'Warning' ? 'warn' : 'off';
               const pred = preds.find((p) => p.aircraft_id === a.aircraft_id && p.component === a.component);
@@ -143,7 +147,7 @@ export default function CommandCenter() {
                     <div className="flex min-w-0 items-center gap-2">
                       <StateTag st={st as any} label={a.severity === 'Critical' ? 'HIGH' : a.severity === 'Warning' ? 'MONITOR' : a.severity.toUpperCase()} className="shrink-0" />
                       <span className="shrink-0 font-mono text-[12px] text-txt">{a.aircraft_id || '—'}</span>
-                      <span className="truncate text-[11.5px] text-txt-dim">{a.component}</span>
+                      <span className="truncate text-[11.5px] text-txt-dim" title={a.component}>{a.component}</span>
                     </div>
                     {pred && (
                       <span className="shrink-0 whitespace-nowrap font-mono text-[10px]" style={{ color: stateColor(rulState(pred.rul)) }}>
@@ -151,20 +155,20 @@ export default function CommandCenter() {
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 text-[11.5px] leading-snug text-txt-dim">{a.message}</div>
-                  <div className="mt-0.5 font-mono text-[9.5px] text-txt-faint">ACTION: {a.action}</div>
+                  <div className="mt-1 break-words text-[11.5px] leading-snug text-txt-dim">{a.message}</div>
+                  <div className="mt-0.5 break-words font-mono text-[9.5px] leading-snug text-txt-faint">ACTION: {a.action}</div>
                 </button>
               );
             })}
           </div>
-          <div className="border-t border-line px-3 py-2">
+          <div className="shrink-0 border-t border-line px-3 py-2">
             <Link to="/app/alerts" className="link font-mono text-[10.5px] uppercase tracking-[0.08em]">ALL ALERTS →</Link>
           </div>
         </Panel>
       </div>
 
       {/* ---------------- SECTION 4 + system assessment ---------------- */}
-      <div className="mb-3 grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
+      <div className="mb-3 grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)]">
         <Panel title="SECTION 04 — FLEET HEALTH TREND" sub="AVAILABILITY % · 30D HISTORY · 30D PROJECTION" icon="chart"
           right={<span className="font-mono text-[9.5px] text-txt-faint">SYNTHETIC SCENARIO</span>}>
           <AvailabilityChart history={fleet.history || []} projection={fleet.projection || []} height={230} />
@@ -180,8 +184,9 @@ export default function CommandCenter() {
           </div>
         </Panel>
 
-        <Panel title="SYSTEM ASSESSMENT" sub="AUTO-GENERATED · EVIDENCE + CONFIDENCE" icon="activity" bodyClass="p-0">
-          <div className="divide-y divide-line">
+        <Panel title="SYSTEM ASSESSMENT" sub="AUTO-GENERATED · EVIDENCE + CONFIDENCE" icon="activity"
+          className="flex flex-col" bodyClass="flex min-h-0 flex-1 flex-col p-0">
+          <div className="min-h-0 flex-1 divide-y divide-line overflow-y-auto overscroll-contain">
             {insights.length === 0 ? (
               <div className="p-3"><EmptyState title="NO ASSESSMENTS" message="No system assessments currently published." /></div>
             ) : insights.map((x, i) => (
@@ -195,7 +200,7 @@ export default function CommandCenter() {
               </div>
             ))}
           </div>
-          <div className="border-t border-line px-3 py-2 font-mono text-[9px] leading-relaxed tracking-[0.05em] text-txt-faint">
+          <div className="shrink-0 border-t border-line px-3 py-2 font-mono text-[9px] leading-relaxed tracking-[0.05em] text-txt-faint">
             AI-GENERATED ASSESSMENTS — ADVISORY ONLY, REQUIRE AUTHORIZED HUMAN REVIEW.
           </div>
         </Panel>
@@ -206,9 +211,9 @@ export default function CommandCenter() {
         <div className="mb-1.5 tlabel tlabel-dim">SECTION 05 — PREDICTIVE MAINTENANCE QUEUE</div>
         <Panel title="AIRCRAFT REQUIRING ACTION" sub="ORDERED BY FAILURE PROBABILITY" icon="warning" bodyClass="p-0">
           {queue.length === 0 ? (
-            <div className="p-3"><EmptyState title="QUEUE EMPTY" message="No component predictions above the monitoring threshold (P≥35%)." hint={`LAST MODEL RUN ${istTime(new Date().toISOString())}`} /></div>
+            <div className="p-3"><EmptyState title="QUEUE EMPTY" message="No component predictions above the monitoring threshold (P≥35%)." hint={`LAST MODEL RUN ${(sys.lastUpdated ? istClock(sys.lastUpdated) : '—')}`} /></div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
               <table className="dt">
                 <thead>
                   <tr>
@@ -227,7 +232,7 @@ export default function CommandCenter() {
                       <td className="mono">{p.window}</td>
                       <td className="mono">{pctOf(p.confidence * 100, 0)}</td>
                       <td className="mono">{num(p.anomaly, 2)}</td>
-                      <td className="max-w-[260px]" style={{ whiteSpace: 'normal' }}>{p.recommendation}</td>
+                      <td className="wrap-sm">{p.recommendation}</td>
                       <td><span className="link font-mono text-[10px]">DIAGNOSTICS →</span></td>
                     </tr>
                   ))}

@@ -42,7 +42,7 @@ export function Analytics() {
         <a className="btn" href="/api/report" target="_blank" rel="noreferrer"><Icon name="download" size={12} /> READINESS REPORT</a>
       </PageHeader>
 
-      <MetricGrid cols="grid-cols-2 lg:grid-cols-4" className="mb-3">
+      <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(min(170px,100%),1fr))]" className="mb-3">
         <Metric label="CURRENT AVAILABILITY" value={`${num((fleet.history || []).slice(-1)[0]?.operational, 1)}%`} />
         <Metric label="REACTIVE POSTURE" value={`${num(a.reactive_avail, 1)}%`} hint="FROM HISTORICAL DOWNTIME" />
         <Metric label="PREDICTIVE POSTURE" value={`${num(a.predictive_avail, 1)}%`} st={delta >= 0 ? 'ok' : 'crit'} hint="PROJECTED, SIMULATED" />
@@ -62,7 +62,7 @@ export function Analytics() {
         </Panel>
 
         <Panel title="REACTIVE VS PREDICTIVE POSTURE" sub="COMPUTED FROM DB RECORDS" icon="activity">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(260px,100%),1fr))] gap-4">
             <div>
               <div className="tlabel tlabel-dim mb-2">REACTIVE — FROM HISTORICAL DOWNTIME</div>
               <div className="metric-val text-[24px]">{num(a.reactive_avail, 1)}%</div>
@@ -90,7 +90,7 @@ export function Analytics() {
         </Panel>
 
         <Panel title="RELIABILITY INDICATORS" icon="database">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(160px,100%),1fr))] gap-3">
             <Metric label="MTBF (PROXY)" value={`${num(a.mtbf, 0)} H`} hint="PROTOTYPE ESTIMATE" />
             <Metric label="MTTR" value={`${num(a.mttr, 1)} H`} hint="MEAN TIME TO REPAIR" />
             <Metric label="FLEET SIZE" value={fleet.aircraft?.length ?? '—'} hint="REGISTERED AIRCRAFT" />
@@ -152,7 +152,7 @@ export function FailureAnalysis() {
           {a.pareto?.length ? (
             <>
               <ParetoChart data={a.pareto} height={250} />
-              <div className="mt-2 overflow-x-auto border-t border-line pt-2">
+              <div className="tablewrap mt-2 border-t border-line pt-2" tabIndex={0} role="region" aria-label="Scrollable table">
                 <table className="dt">
                   <thead><tr><th>COMPONENT</th><th>PREDICTED FAILURES</th><th>CUMULATIVE %</th></tr></thead>
                   <tbody>
@@ -175,6 +175,7 @@ export function FailureAnalysis() {
         <div className="grid gap-3 lg:grid-cols-2">
           <Panel title="RECORDED FAULT MODES" sub="MAINTENANCE HISTORY" icon="database" bodyClass="p-0">
             {faultCounts.length === 0 ? <div className="p-3"><NotAvailable label="NO RECORDS" /></div> : (
+              <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
               <table className="dt">
                 <thead><tr><th>FAULT MODE</th><th>RECORDS</th><th>SHARE</th></tr></thead>
                 <tbody>
@@ -187,11 +188,13 @@ export function FailureAnalysis() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </Panel>
 
           <Panel title="ACTIVE ANOMALIES BY COMPONENT" sub="DETECTOR OUTPUT" icon="alert" bodyClass="p-0">
             {anomalyByComp.length === 0 ? <div className="p-3"><EmptyState title="NO ACTIVE ANOMALIES" message="No sensor channel currently exceeds the anomaly threshold." /></div> : (
+              <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
               <table className="dt">
                 <thead><tr><th>COMPONENT</th><th>ACTIVE ANOMALIES</th></tr></thead>
                 <tbody>
@@ -203,6 +206,7 @@ export function FailureAnalysis() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </Panel>
         </div>
@@ -238,7 +242,7 @@ export function WhatIf() {
         provenance="SIMULATION — NOT A MEASURED RESULT"
       />
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(340px,3fr)]">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(320px,3fr)]">
         <Panel title="SCENARIO INPUTS" icon="gear">
           <div className="grid gap-3">
             {FIELDS.map(([k, label, hint]) => (
@@ -264,7 +268,7 @@ export function WhatIf() {
           )}
           {!err && r && (
             <>
-              <MetricGrid cols="grid-cols-1 sm:grid-cols-2">
+              <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))]">
                 <Metric label="SIMULATED AVAILABILITY" value={`${num(r.simulated_availability, 1)}%`} big st={r.simulated_availability >= 70 ? 'ok' : 'alert'} />
                 <Metric label="SIMULATED BACKLOG" value={r.simulated_backlog} big st={r.simulated_backlog > 0 ? 'warn' : 'ok'} hint="OPEN WORK ORDERS" />
               </MetricGrid>

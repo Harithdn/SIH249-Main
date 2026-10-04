@@ -49,7 +49,7 @@ export function Inventory() {
           options={[{ id: 'ALL', label: 'ALL', count: counts.ALL }, { id: 'HIGH', label: 'SHORTAGE', count: counts.HIGH }, { id: 'MEDIUM', label: 'WATCH', count: counts.MEDIUM }, { id: 'LOW', label: 'ADEQUATE', count: counts.LOW }]} />
       </PageHeader>
 
-      <MetricGrid cols="grid-cols-2 lg:grid-cols-4" className="mb-3">
+      <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(min(170px,100%),1fr))]" className="mb-3">
         <Metric label="TRACKED PARTS" value={int(rows.length)} />
         <Metric label="SHORTAGE (STOCK ≤ MIN)" value={counts.HIGH} st={counts.HIGH ? 'crit' : 'ok'} />
         <Metric label="WATCH LEVEL" value={counts.MEDIUM} st={counts.MEDIUM ? 'warn' : 'ok'} />
@@ -57,7 +57,7 @@ export function Inventory() {
       </MetricGrid>
 
       <Panel title="PARTS REGISTER" sub={`${filtered.length} PARTS`} icon="box" bodyClass="p-0">
-        <div className="overflow-x-auto">
+        <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="dt">
             <thead>
               <tr><th>PART NUMBER</th><th>DESCRIPTION</th><th>CATEGORY</th><th>STOCK / MIN</th><th>COVERAGE</th><th>DEMAND</th><th>LEAD TIME</th><th>SUPPLIER</th><th>STATUS</th></tr>
@@ -128,9 +128,9 @@ export function Forecast() {
         provenance="DEMAND FROM PREDICTION MODEL · SYNTHETIC"
       />
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)]">
         <Panel title="PARTS BY PROJECTED COVERAGE" sub={`${rows.length} PARTS`} icon="box" bodyClass="p-0">
-          <div className="overflow-x-auto">
+          <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="dt">
               <thead><tr><th>PART</th><th>DESCRIPTION</th><th>STOCK</th><th>PREDICTED DEMAND</th><th>COVERAGE</th><th>TRAJECTORY</th><th>STATUS</th></tr></thead>
               <tbody>
@@ -152,7 +152,7 @@ export function Forecast() {
 
         {cur ? (
           <Panel title={`STOCK TRAJECTORY — ${cur.part_id}`} sub={cur.name} icon="chart">
-            <div className="mb-2 grid grid-cols-3 gap-3 border-b border-line pb-2">
+            <div className="mb-2 grid grid-cols-[repeat(auto-fit,minmax(min(96px,100%),1fr))] gap-3 border-b border-line pb-2">
               <Metric label="CURRENT STOCK" value={cur.stock} />
               <Metric label="PREDICTED DEMAND" value={cur.predicted_demand} st={cur.risk === 'HIGH' ? 'crit' : 'warn'} />
               <Metric label="COVERAGE" value={cur.coverage} st={cur.risk === 'HIGH' ? 'crit' : 'ok'} />
@@ -209,14 +209,14 @@ export function Technicians() {
         provenance="RESOURCE DATA: SYNTHETIC"
       />
 
-      <MetricGrid cols="grid-cols-1 sm:grid-cols-3" className="mb-3">
+      <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(min(190px,100%),1fr))]" className="mb-3">
         <Metric label="TECHNICIANS" value={rows.length} />
         <Metric label="AVAILABLE (>60%)" value={rows.filter((t) => t.availability > 0.6).length} st="ok" />
         <Metric label="OPEN ASSIGNMENTS" value={Object.values(assigned).reduce((s: number, l: any[]) => s + l.length, 0)} st="warn" />
       </MetricGrid>
 
       <Panel title="WORKFORCE REGISTER" sub={`${rows.length} TECHNICIANS`} icon="person" bodyClass="p-0">
-        <div className="overflow-x-auto">
+        <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="dt">
             <thead>
               <tr><th>TECHNICIAN</th><th>SPECIALIZATION</th><th>AVAILABILITY</th><th>WORKLOAD</th><th>ACTIVE JOBS</th><th>ASSIGNED WORK ORDERS</th><th>STATUS</th><th></th></tr>

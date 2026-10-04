@@ -92,7 +92,7 @@ export default function FleetPage() {
       </PageHeader>
 
       {/* base summary — auto-fitting metric strip */}
-      <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(170px,1fr))]" className="mb-3">
+      <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(min(170px,100%),1fr))]" className="mb-3">
         {Object.entries(byBase).map(([base, v]) => (
           <div key={base}>
             <div className="tlabel">{base.toUpperCase()} (FICTIONAL)</div>
@@ -109,7 +109,7 @@ export default function FleetPage() {
         {filtered.length === 0 ? (
           <div className="p-3"><EmptyState title="NO AIRCRAFT MATCH FILTER" message="Adjust the search term or status filter." /></div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="dt">
               <thead>
                 <tr>

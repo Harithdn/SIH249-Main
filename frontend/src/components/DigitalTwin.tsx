@@ -167,7 +167,7 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
   const stations = [100, 200, 300, 400, 500, 600, 700, 800];
 
   return (
-    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(320px,360px)]">
+    <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(300px,340px)]">
       {/* ---------------- schematic ---------------- */}
       <Panel
         className="min-w-0"
@@ -367,9 +367,9 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
       {/* ---------------- component inspection ---------------- */}
       <Panel title="COMPONENT INSPECTION" sub={aid} bodyClass="p-0">
         <div className="border-b border-line bg-surface2 px-3 py-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <div className="font-mono text-[13px] font-medium tracking-[0.06em] text-txt">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="break-words font-mono text-[13px] font-medium tracking-[0.06em] text-txt">
                 {structureSel ? 'AIRFRAME / STRUCTURE' : fcDerived ? 'FLIGHT CONTROLS' : (compShort[sel] || sel)}
               </div>
               <div className="tlabel mt-0.5">
@@ -434,7 +434,7 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
 
               <div className="mt-3 border-t border-line pt-2">
                 <SectionHeader title="MODEL OUTPUT" />
-                <div className="grid grid-cols-2 gap-x-4">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(min(110px,100%),1fr))] gap-x-4">
                   <div><div className="tlabel">FAILURE PROB</div><div className="metric-val text-[15px]" style={{ color: stateColor(selPred ? (selPred.failure_prob >= 0.75 ? 'crit' : selPred.failure_prob >= 0.55 ? 'alert' : selPred.failure_prob >= 0.35 ? 'warn' : 'ok') : 'off') }}>{selPred ? pctOf(selPred.failure_prob * 100, 1) : '—'}</div></div>
                   <div><div className="tlabel">RUL</div><div className="metric-val text-[15px]" style={{ color: stateColor(rulState(effComp.rul)) }}>{num(effComp.rul, 1)}<span className="ml-1 text-[10px] text-txt-faint">D</span></div></div>
                   <div className="mt-2"><div className="tlabel">CONFIDENCE</div><div className="metric-val text-[13px]">{selPred ? pctOf(selPred.confidence * 100, 0) : '—'}</div></div>

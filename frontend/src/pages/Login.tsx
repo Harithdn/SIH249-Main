@@ -26,8 +26,8 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-base p-4">
-      <div className="w-full max-w-[380px]">
+    <div className="flex min-h-[100dvh] w-full items-center justify-center bg-base px-4 py-8">
+      <div className="w-full max-w-[380px] min-w-0">
         <div className="border border-line bg-surface">
           <div className="border-b border-line bg-surface2 px-5 py-4">
             <div className="font-mono text-[14px] font-semibold tracking-[0.2em] text-txt">AEROSENTINEL</div>

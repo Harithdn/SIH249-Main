@@ -5,7 +5,7 @@ import { get } from '../services/api';
 import { useSystem } from '../components/SystemContext';
 import { Panel, PageHeader, StatusTag, StateTag, LoadingState, ErrorState, EmptyState, ContribBar, Metric, SearchInput, Segmented, NotAvailable } from '../components/ui';
 import { RulChart } from '../components/charts';
-import { istTime, num, pctOf, probState, rulState, stateColor } from '../lib/format';
+import { istTime, num, pctOf, probState, rulState, stateColor, istClock } from '../lib/format';
 
 /* ================= PREDICTIONS ================= */
 export function Predictions() {
@@ -59,9 +59,9 @@ export function Predictions() {
 
       <Panel title="PREDICTED COMPONENT FAILURES" sub={`${filtered.length} COMPONENTS`} icon="target" bodyClass="p-0">
         {filtered.length === 0 ? (
-          <div className="p-3"><EmptyState title="NO PREDICTIONS MATCH FILTER" message="No components above the selected probability threshold." hint={`MODEL RUN ${istTime(new Date().toISOString())}`} /></div>
+          <div className="p-3"><EmptyState title="NO PREDICTIONS MATCH FILTER" message="No components above the selected probability threshold." hint={`MODEL RUN ${(sys.lastUpdated ? istClock(sys.lastUpdated) : '—')}`} /></div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="dt">
               <thead>
                 <tr><th>AIRCRAFT</th><th>COMPONENT</th><th>P(FAIL)</th><th>SEVERITY</th><th>RUL</th><th>WINDOW</th><th>CONFIDENCE</th><th>ANOMALY</th><th>VIB</th><th>TEMP</th><th>RECOMMENDATION</th><th></th></tr>
@@ -80,13 +80,13 @@ export function Predictions() {
                       <td className="mono">{num(p.anomaly, 2)}</td>
                       <td className="mono">{num(p.vib, 2)}</td>
                       <td className="mono">{num(p.temp, 1)}°</td>
-                      <td style={{ whiteSpace: 'normal' }} className="max-w-[240px] text-[11.5px]">{p.recommendation}</td>
+                      <td className="wrap-sm text-[11.5px]">{p.recommendation}</td>
                       <td><span className="font-mono text-[10px] text-txt-faint">{open === i ? '▾' : '▸'} REASONING</span></td>
                     </tr>
                     {open === i && (
                       <tr>
                         <td colSpan={12} className="!whitespace-normal !bg-inset p-0">
-                          <div className="grid gap-4 p-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]">
+                          <div className="grid gap-4 p-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,220px)]">
                             <div>
                               <div className="tlabel tlabel-dim mb-1.5">FEATURE CONTRIBUTION (PERTURBATION-BASED)</div>
                               {p.explanation?.map((e: any) => <ContribBar key={e.feature} label={e.feature} pct={e.pct} />)}
@@ -94,7 +94,7 @@ export function Predictions() {
                             </div>
                             <div>
                               <div className="tlabel tlabel-dim mb-1.5">SENSOR CONTEXT</div>
-                              <div className="grid grid-cols-2 gap-x-6">
+                              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(120px,100%),1fr))] gap-x-6 gap-y-1">
                                 <Metric label="VIBRATION" value={`${num(p.vib, 2)} mm/s`} st={p.vib > 5 ? 'warn' : 'ok'} />
                                 <Metric label="TEMPERATURE" value={`${num(p.temp, 1)} °C`} st={p.temp > 100 ? 'warn' : 'ok'} />
                                 <Metric label="ANOMALY SCORE" value={num(p.anomaly, 2)} st={p.anomaly > 0.55 ? 'warn' : undefined} />
@@ -152,12 +152,12 @@ export function Anomalies() {
         <SearchInput value={q} onChange={setQ} placeholder="SEARCH AIRCRAFT / COMPONENT" />
       </PageHeader>
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)]">
         <Panel title="DETECTION TIMELINE" sub={`${filtered.length} EVENTS · BY SCORE`} icon="alert" bodyClass="p-0">
           {filtered.length === 0 ? (
-            <div className="p-3"><EmptyState title="NO ANOMALIES DETECTED" message="No sensor channel currently exceeds the anomaly threshold." hint={`LAST DETECTOR RUN ${istTime(new Date().toISOString())}`} /></div>
+            <div className="p-3"><EmptyState title="NO ANOMALIES DETECTED" message="No sensor channel currently exceeds the anomaly threshold." hint={`LAST DETECTOR RUN ${(sys.lastUpdated ? istClock(sys.lastUpdated) : '—')}`} /></div>
           ) : (
-            <div className="max-h-[560px] overflow-auto">
+            <div className="scrollpanel">
               <table className="dt">
                 <thead><tr><th>TIME</th><th>AIRCRAFT</th><th>COMPONENT</th><th>SENSOR</th><th>VALUE</th><th>EXPECTED</th><th>DEVIATION</th><th>SCORE</th><th>SEVERITY</th></tr></thead>
                 <tbody>
@@ -185,7 +185,7 @@ export function Anomalies() {
             <EmptyState title="NO DETECTION SELECTED" message="Select an anomaly from the timeline to inspect the engineering explanation and recommended action." />
           ) : (
             <div className="grid gap-3">
-              <div className="grid grid-cols-3 gap-3 border-b border-line pb-3">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(96px,100%),1fr))] gap-3 border-b border-line pb-3">
                 <Metric label="SENSOR" value={sel.sensor} />
                 <Metric label="VALUE" value={`${num(sel.value, 2)} mm/s`} st="warn" />
                 <Metric label="SCORE" value={num(sel.score, 2)} st={sel.score > 0.8 ? 'crit' : 'warn'} />
@@ -256,9 +256,9 @@ export function Rul() {
         <SearchInput value={q} onChange={(v) => { setQ(v); setSelIdx(0); }} placeholder="SEARCH AIRCRAFT / COMPONENT" />
       </PageHeader>
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(300px,360px)_minmax(0,1fr)]">
+      <div className="grid gap-3 xl:grid-cols-[minmax(260px,330px)_minmax(0,1fr)]">
         <Panel title="COMPONENTS BY URGENCY" sub={`${filtered.length} TRACKED`} icon="clock" bodyClass="p-0">
-          <div className="max-h-[560px] divide-y divide-line overflow-y-auto">
+          <div className="scrollpanel divide-y divide-line">
             {filtered.length === 0 ? <div className="p-3"><EmptyState title="NO MATCHES" message="No RUL records match the search." /></div> : filtered.map((r, i) => (
               <button key={i} className={`block w-full px-3 py-2 text-left ${i === selIdx ? 'bg-[#14222B]' : 'hover:bg-surface2'}`}
                 onClick={() => setSelIdx(i)}>
@@ -278,7 +278,7 @@ export function Rul() {
         {cur ? (
           <Panel title={`DEGRADATION CURVE — ${cur.aircraft_id} · ${cur.component}`} sub="MEASURED HISTORY + PROJECTION" icon="chart"
             right={<Link className="link font-mono text-[10px] uppercase tracking-[0.08em]" to={`/app/aircraft/${cur.aircraft_id}/diagnostics`}>DIAGNOSTICS →</Link>}>
-            <div className="mb-2 grid grid-cols-2 gap-x-8 border-b border-line pb-2 sm:grid-cols-4">
+            <div className="mb-2 grid grid-cols-[repeat(auto-fit,minmax(min(140px,100%),1fr))] gap-x-6 gap-y-2 border-b border-line pb-2">
               <Metric label="CURRENT RUL" value={`${num(cur.rul, 1)} D`} st={rulState(cur.rul)} />
               <Metric label="EXPECTED RANGE" value={`${num(cur.lo, 1)}–${num(cur.hi, 1)} D`} hint={`CONFIDENCE ${pctOf(cur.confidence * 100, 0)}`} />
               <Metric label="DEGRADATION" value={pctOf(cur.degradation, 1)} st={cur.degradation > 40 ? 'alert' : cur.degradation > 25 ? 'warn' : 'ok'} />
