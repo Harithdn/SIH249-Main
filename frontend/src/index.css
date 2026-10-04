@@ -28,6 +28,20 @@
 
 html { background: var(--bg); }
 
+/* Root is locked: the app shell owns the entire viewport and main is the only
+   primary scroll context. Without this, the root scroller can be scrolled into
+   the clipped overflow region of the shell (blank band under the app / topbar
+   cut off when the wheel lands on a non-scrolling chrome element). */
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Application shell: single primary scroll context (main content).
+   dvh where supported; falls back to vh. */
+.app-shell { height: 100vh; height: 100dvh; }
+
+
 body {
   background: var(--bg);
   color: var(--txt);
@@ -69,9 +83,11 @@ body {
 }
 .panel-head {
   display: flex;
+  flex-wrap: wrap;           /* controls wrap to a second line instead of clipping */
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  column-gap: 12px;
+  row-gap: 4px;
   min-height: 38px;
   padding: 6px 12px;
   border-bottom: 1px solid var(--line);
@@ -84,7 +100,7 @@ body {
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--txt-dim);
-  white-space: nowrap;
+  min-width: 0;
 }
 .panel-body { padding: 12px; }
 
@@ -186,6 +202,7 @@ table.dt tbody tr.sel td { background: #14222b; }
 /* ---------- segmented filter control ---------- */
 .seg {
   display: inline-flex;
+  flex-wrap: wrap;           /* filters wrap to multiple rows instead of overflowing */
   border: 1px solid var(--line-strong);
   border-radius: 2px;
   overflow: hidden;
@@ -233,7 +250,6 @@ table.dt tbody tr.sel td { background: #14222b; }
   color: var(--txt);
   font-variant-numeric: tabular-nums;
 }
-.metric-divider { border-left: 1px solid var(--line); }
 
 /* ---------- link ---------- */
 a.link, .link {
@@ -255,10 +271,10 @@ a.link:hover, .link:hover { text-decoration: underline; }
   text-transform: uppercase;
   color: var(--warn);
 }
-.hatch {
-  background-image: repeating-linear-gradient(45deg, transparent 0 6px, #1c2731 6px 7px);
-}
 .num { font-variant-numeric: tabular-nums; }
+
+/* loading progress bar (LoadingState) */
+@keyframes prog { 0% { margin-left: -33%; } 100% { margin-left: 100%; } }
 
 /* recharts text */
 .recharts-text { font-family: 'IBM Plex Mono', monospace; font-size: 10px; fill: #75808b; }

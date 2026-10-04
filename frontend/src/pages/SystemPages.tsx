@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { get, post, apiBase } from '../services/api';
 import { useSystem } from '../components/SystemContext';
-import { Panel, PageHeader, StatusTag, StateTag, LoadingState, ErrorState, EmptyState, Metric, NotAvailable, Segmented, SearchInput, KV } from '../components/ui';
+import { Panel, PageHeader, StatusTag, StateTag, LoadingState, ErrorState, EmptyState, Metric, MetricGrid, NotAvailable, Segmented, SearchInput, KV } from '../components/ui';
 import { int, istDateTime, istTime, num, pctOf } from '../lib/format';
 import { Icon } from '../components/icons';
 import { useAuth } from '../context/AuthContext';
@@ -232,12 +232,12 @@ export function SystemStatus() {
         </Panel>
 
         <Panel title="DATA QUALITY" sub="TELEMETRY PIPELINE INDICATORS" icon="chart">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <MetricGrid cols="grid-cols-2 lg:grid-cols-4">
             <Metric label="TELEMETRY COMPLETENESS" value={pctOf(dq.telemetry_completeness, 1)} st={dq.telemetry_completeness >= 95 ? 'ok' : 'warn'} />
             <Metric label="SENSOR RELIABILITY" value={pctOf(dq.sensor_reliability, 1)} st={dq.sensor_reliability >= 80 ? 'ok' : 'warn'} hint="RANGE-VALIDATED READINGS" />
             <Metric label="RECORD COMPLETENESS" value={pctOf(dq.record_completeness, 1)} st={dq.record_completeness >= 95 ? 'ok' : 'warn'} />
             <Metric label="OVERALL SCORE" value={pctOf(dq.score, 1)} st={dq.score >= 80 ? 'ok' : 'warn'} hint="WEIGHTED COMPOSITE" />
-          </div>
+          </MetricGrid>
           <div className="mt-3 overflow-x-auto border-t border-line pt-2">
             <table className="dt">
               <thead><tr><th>READINGS</th><th>MISSING FIELDS</th><th>STALE FEEDS (&gt;24H)</th></tr></thead>
@@ -257,7 +257,7 @@ export function SystemStatus() {
             <KV k="APPLICATION" v="AEROSENTINEL — PROTOTYPE" />
             <KV k="API BASE" v={<span className="break-all">{apiBase || 'SAME ORIGIN'}</span>} />
             <KV k="OPERATOR" v={`${user?.username || '—'} / ${String(user?.role || '').toUpperCase()}`} />
-            <KV k="ACTIVE MODEL" v={sys.modelLabel} />
+            <KV k="ACTIVE MODEL" v={sys.modelName} />
             <KV k="LAST UPDATED" v={sys.lastUpdated ? istTime(sys.lastUpdated.toISOString()) : '—'} />
             <KV k="DATA MODE" v={sys.simActive ? 'LIVE SIMULATION' : 'SIMULATION'} vClass="text-warn" />
           </Panel>
@@ -312,7 +312,7 @@ export function DataSources() {
         provenance="DEMO INGESTION · SYNTHETIC DATA ONLY"
       />
 
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
         <Panel title="CSV INGESTION" sub="VALIDATION + PROFILE" icon="file">
           <label className="flex cursor-pointer flex-col items-center justify-center border border-dashed border-line-strong bg-inset/50 px-6 py-10 text-center">
             <Icon name="file" size={18} className="mb-2 text-txt-faint" />
@@ -459,7 +459,7 @@ export function Copilot() {
         provenance="READ-ONLY · RETRIEVAL FROM LIVE DATA"
       />
 
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
         <Panel title="QUERY" icon="search">
           <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); ask(); }}>
             <input className="inp font-mono text-[12px]" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Query" />

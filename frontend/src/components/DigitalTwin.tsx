@@ -167,9 +167,10 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
   const stations = [100, 200, 300, 400, 500, 600, 700, 800];
 
   return (
-    <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_330px]">
+    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(320px,360px)]">
       {/* ---------------- schematic ---------------- */}
       <Panel
+        className="min-w-0"
         title={`DIGITAL TWIN — ${aid}`}
         sub="TOP VIEW · GENERIC SCHEMATIC · NON-CLASSIFIED"
         right={
@@ -384,7 +385,7 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
           )}
         </div>
 
-        <div className="max-h-[560px] overflow-y-auto px-3 py-3">
+        <div className="px-3 py-3">
           {!effComp ? <NotAvailable label="COMPONENT DATA NOT AVAILABLE" /> : (
             <>
               <SectionHeader title="COMPONENT HEALTH" />

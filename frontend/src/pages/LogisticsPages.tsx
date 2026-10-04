@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { get } from '../services/api';
 import { useSystem } from '../components/SystemContext';
-import { Panel, PageHeader, StateTag, LoadingState, ErrorState, Metric, SearchInput, Segmented, NotAvailable } from '../components/ui';
+import { Panel, PageHeader, StateTag, LoadingState, ErrorState, Metric, MetricGrid, SearchInput, Segmented, NotAvailable } from '../components/ui';
 import { Spark, TimeSeriesChart } from '../components/charts';
 import { int, pctOf } from '../lib/format';
 
@@ -49,12 +49,12 @@ export function Inventory() {
           options={[{ id: 'ALL', label: 'ALL', count: counts.ALL }, { id: 'HIGH', label: 'SHORTAGE', count: counts.HIGH }, { id: 'MEDIUM', label: 'WATCH', count: counts.MEDIUM }, { id: 'LOW', label: 'ADEQUATE', count: counts.LOW }]} />
       </PageHeader>
 
-      <div className="mb-3 grid gap-3 sm:grid-cols-4">
-        <Metric label="TRACKED PARTS" value={int(rows.length)} className="panel px-4 py-3" />
-        <Metric label="SHORTAGE (STOCK ≤ MIN)" value={counts.HIGH} className="panel px-4 py-3" st={counts.HIGH ? 'crit' : 'ok'} />
-        <Metric label="WATCH LEVEL" value={counts.MEDIUM} className="panel px-4 py-3" st={counts.MEDIUM ? 'warn' : 'ok'} />
-        <Metric label="ADEQUATE" value={counts.LOW} className="panel px-4 py-3" st="ok" />
-      </div>
+      <MetricGrid cols="grid-cols-2 lg:grid-cols-4" className="mb-3">
+        <Metric label="TRACKED PARTS" value={int(rows.length)} />
+        <Metric label="SHORTAGE (STOCK ≤ MIN)" value={counts.HIGH} st={counts.HIGH ? 'crit' : 'ok'} />
+        <Metric label="WATCH LEVEL" value={counts.MEDIUM} st={counts.MEDIUM ? 'warn' : 'ok'} />
+        <Metric label="ADEQUATE" value={counts.LOW} st="ok" />
+      </MetricGrid>
 
       <Panel title="PARTS REGISTER" sub={`${filtered.length} PARTS`} icon="box" bodyClass="p-0">
         <div className="overflow-x-auto">
@@ -128,7 +128,7 @@ export function Forecast() {
         provenance="DEMAND FROM PREDICTION MODEL · SYNTHETIC"
       />
 
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
         <Panel title="PARTS BY PROJECTED COVERAGE" sub={`${rows.length} PARTS`} icon="box" bodyClass="p-0">
           <div className="overflow-x-auto">
             <table className="dt">
@@ -209,11 +209,11 @@ export function Technicians() {
         provenance="RESOURCE DATA: SYNTHETIC"
       />
 
-      <div className="mb-3 grid gap-3 sm:grid-cols-3">
-        <Metric label="TECHNICIANS" value={rows.length} className="panel px-4 py-3" />
-        <Metric label="AVAILABLE (>60%)" value={rows.filter((t) => t.availability > 0.6).length} className="panel px-4 py-3" st="ok" />
-        <Metric label="OPEN ASSIGNMENTS" value={Object.values(assigned).reduce((s: number, l: any[]) => s + l.length, 0)} className="panel px-4 py-3" st="warn" />
-      </div>
+      <MetricGrid cols="grid-cols-1 sm:grid-cols-3" className="mb-3">
+        <Metric label="TECHNICIANS" value={rows.length} />
+        <Metric label="AVAILABLE (>60%)" value={rows.filter((t) => t.availability > 0.6).length} st="ok" />
+        <Metric label="OPEN ASSIGNMENTS" value={Object.values(assigned).reduce((s: number, l: any[]) => s + l.length, 0)} st="warn" />
+      </MetricGrid>
 
       <Panel title="WORKFORCE REGISTER" sub={`${rows.length} TECHNICIANS`} icon="person" bodyClass="p-0">
         <div className="overflow-x-auto">

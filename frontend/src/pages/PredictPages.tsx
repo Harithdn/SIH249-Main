@@ -152,7 +152,7 @@ export function Anomalies() {
         <SearchInput value={q} onChange={setQ} placeholder="SEARCH AIRCRAFT / COMPONENT" />
       </PageHeader>
 
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
         <Panel title="DETECTION TIMELINE" sub={`${filtered.length} EVENTS · BY SCORE`} icon="alert" bodyClass="p-0">
           {filtered.length === 0 ? (
             <div className="p-3"><EmptyState title="NO ANOMALIES DETECTED" message="No sensor channel currently exceeds the anomaly threshold." hint={`LAST DETECTOR RUN ${istTime(new Date().toISOString())}`} /></div>
@@ -256,7 +256,7 @@ export function Rul() {
         <SearchInput value={q} onChange={(v) => { setQ(v); setSelIdx(0); }} placeholder="SEARCH AIRCRAFT / COMPONENT" />
       </PageHeader>
 
-      <div className="grid gap-3 xl:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="grid gap-3 lg:grid-cols-[minmax(300px,360px)_minmax(0,1fr)]">
         <Panel title="COMPONENTS BY URGENCY" sub={`${filtered.length} TRACKED`} icon="clock" bodyClass="p-0">
           <div className="max-h-[560px] divide-y divide-line overflow-y-auto">
             {filtered.length === 0 ? <div className="p-3"><EmptyState title="NO MATCHES" message="No RUL records match the search." /></div> : filtered.map((r, i) => (

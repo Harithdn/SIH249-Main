@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { get } from '../services/api';
 import { useSystem } from '../components/SystemContext';
-import { Panel, PageHeader, Metric, MetricRow, StatusTag, StateTag, LoadingState, ErrorState, EmptyState } from '../components/ui';
+import { Panel, PageHeader, Metric, MetricGrid, StatusTag, StateTag, LoadingState, ErrorState, EmptyState } from '../components/ui';
 import { AvailabilityChart } from '../components/charts';
 import { Icon } from '../components/icons';
 import { num, pctOf, probState, rulState, stateColor, istTime } from '../lib/format';
@@ -71,14 +71,11 @@ export default function CommandCenter() {
       {/* ---------------- SECTION 1 · FLEET READINESS ---------------- */}
       <div className="mb-3">
         <div className="mb-1.5 tlabel tlabel-dim">SECTION 01 — FLEET READINESS</div>
-        <MetricRow>
-          <div className="flex items-baseline gap-3">
+        <MetricGrid cols="grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-[minmax(210px,1.4fr)_repeat(6,minmax(96px,1fr))]">
+          <div>
             <Metric label="FLEET READINESS" value={<span>{num(readiness, 1)}<span className="text-[16px]">%</span></span>} st={readiness >= 75 ? 'ok' : readiness >= 60 ? 'warn' : 'alert'} />
-            <div className="hidden h-[52px] w-px bg-line md:block" />
-            <div className="hidden md:block">
-              <div className="tlabel">OPERATIONAL / TOTAL</div>
-              <div className="metric-val mt-0.5 text-[15px]">{d.operational} <span className="text-[11px] text-txt-faint">/ {d.fleet_size}</span></div>
-              <div className="mt-0.5 font-mono text-[10px] text-txt-faint">MTTR {num(d.mttr, 1)} H</div>
+            <div className="mt-1 font-mono text-[10px] leading-relaxed text-txt-faint">
+              {d.operational} / {d.fleet_size} OPERATIONAL · MTTR {num(d.mttr, 1)} H
             </div>
           </div>
           <Metric label="READY" value={d.operational} st="ok" hint={`HEALTHY ${dist.Healthy ?? '—'}`} />
@@ -87,11 +84,11 @@ export default function CommandCenter() {
           <Metric label="AOG / CRITICAL" value={d.critical} st="crit" hint="ATTENTION REQUIRED" />
           <Metric label="PREDICTED FAILURES 30D" value={d.predicted_30d} st={d.predicted_30d > 0 ? 'alert' : 'ok'} hint="P>50% · RUL≤30D" />
           <Metric label="WO BACKLOG" value={d.backlog} st={d.backlog > 0 ? 'warn' : 'ok'} hint="OPEN WORK ORDERS" />
-        </MetricRow>
+        </MetricGrid>
       </div>
 
       {/* ---------------- SECTION 2 + 3 ---------------- */}
-      <div className="mb-3 grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="mb-3 grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(340px,1fr)]">
         {/* fleet status board */}
         <Panel title="SECTION 02 — FLEET STATUS BOARD" sub="SELECT AIRCRAFT TO OPEN WORKSPACE" icon="aircraft">
           <div className="space-y-3">
@@ -112,7 +109,7 @@ export default function CommandCenter() {
                         title={`${a.aircraft_id} · ${a.platform} · ${a.status} · health ${a.health}`}
                         className="border bg-inset px-1 py-1 text-center"
                         style={{ borderColor: c + '55' }}>
-                        <div className="font-mono text-[10.5px] tracking-wide text-txt">{a.aircraft_id}</div>
+                        <div className="whitespace-nowrap font-mono text-[10.5px] tracking-wide text-txt">{a.aircraft_id}</div>
                         <div className="mt-1 h-[3px] w-full" style={{ background: c }} />
                         <div className="mt-0.5 font-mono text-[8.5px] text-txt-faint">{num(a.health, 0)}</div>
                       </button>
@@ -142,14 +139,14 @@ export default function CommandCenter() {
               return (
                 <button key={i} className="block w-full border-b border-line px-3 py-2.5 text-left last:border-0 hover:bg-surface2"
                   onClick={() => a.aircraft_id && nav(`/app/aircraft/${a.aircraft_id}/diagnostics`)}>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <StateTag st={st as any} label={a.severity === 'Critical' ? 'HIGH' : a.severity === 'Warning' ? 'MONITOR' : a.severity.toUpperCase()} />
-                      <span className="font-mono text-[12px] text-txt">{a.aircraft_id || '—'}</span>
-                      <span className="text-[11.5px] text-txt-dim">{a.component}</span>
+                  <div className="flex min-w-0 items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <StateTag st={st as any} label={a.severity === 'Critical' ? 'HIGH' : a.severity === 'Warning' ? 'MONITOR' : a.severity.toUpperCase()} className="shrink-0" />
+                      <span className="shrink-0 font-mono text-[12px] text-txt">{a.aircraft_id || '—'}</span>
+                      <span className="truncate text-[11.5px] text-txt-dim">{a.component}</span>
                     </div>
                     {pred && (
-                      <span className="font-mono text-[10px]" style={{ color: stateColor(rulState(pred.rul)) }}>
+                      <span className="shrink-0 whitespace-nowrap font-mono text-[10px]" style={{ color: stateColor(rulState(pred.rul)) }}>
                         RUL {num(pred.rul, 0)} D
                       </span>
                     )}
@@ -167,7 +164,7 @@ export default function CommandCenter() {
       </div>
 
       {/* ---------------- SECTION 4 + system assessment ---------------- */}
-      <div className="mb-3 grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="mb-3 grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
         <Panel title="SECTION 04 — FLEET HEALTH TREND" sub="AVAILABILITY % · 30D HISTORY · 30D PROJECTION" icon="chart"
           right={<span className="font-mono text-[9.5px] text-txt-faint">SYNTHETIC SCENARIO</span>}>
           <AvailabilityChart history={fleet.history || []} projection={fleet.projection || []} height={230} />
@@ -184,7 +181,7 @@ export default function CommandCenter() {
         </Panel>
 
         <Panel title="SYSTEM ASSESSMENT" sub="AUTO-GENERATED · EVIDENCE + CONFIDENCE" icon="activity" bodyClass="p-0">
-          <div className="max-h-[290px] overflow-y-auto divide-y divide-line">
+          <div className="divide-y divide-line">
             {insights.length === 0 ? (
               <div className="p-3"><EmptyState title="NO ASSESSMENTS" message="No system assessments currently published." /></div>
             ) : insights.map((x, i) => (
