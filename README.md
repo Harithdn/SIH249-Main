@@ -32,8 +32,8 @@ The frontend container serves the build via nginx and proxies `/api` to the back
 ## Operations console
 The frontend is an operations application shell (left navigation + top system bar + work area):
 - **Command** — Overview (fleet readiness, status board, active events, maintenance queue), Fleet registry, Alert center.
-- **Aircraft** — per-aircraft workspace: subsystem health matrix, operational timeline, **digital twin** (interactive schematic with subsystem modes and component inspection), engineered telemetry charts (baselines, warning thresholds, anomaly markers, actual-vs-expected), diagnostics (model reasoning, feature contributions, RUL history/projection).
-- **Maintenance** — predictions, anomaly detection, RUL analysis, recommendations (parts + technician + slot), work orders (Detected → Approved → Scheduled → In Progress → Completed), schedule, history, inventory, spares forecast, technicians.
+- **Aircraft** — one per-aircraft workspace for the subsystem health matrix, operational timeline, **digital twin** (interactive schematic with subsystem modes and component inspection), engineered telemetry charts (baselines, warning thresholds, anomaly markers, actual-vs-expected), and diagnostics (model reasoning, feature contributions, RUL history/projection).
+- **Maintenance** — fleet-wide predictions and recommendations; **Work Orders** combines the execution pipeline with scheduling/planning, while **Inventory** combines current stock with the spares-demand forecast. Maintenance history, anomaly/RUL analysis and technician assignments remain available as contextual tools from those workspaces.
 - **Analytics** — fleet trends, failure analysis (Pareto), scenario simulation, model performance (recorded metrics only).
 - **System** — service status, data quality, data sources (CSV ingestion), digital thread, read-only query console, audit log.
 

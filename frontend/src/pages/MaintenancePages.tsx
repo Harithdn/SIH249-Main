@@ -47,6 +47,9 @@ export function WorkOrders() {
         parts: sp.get('parts') ? decodeURIComponent(sp.get('parts')!) : f.parts,
         est_hours: sp.get('hours') ? +sp.get('hours')! : f.est_hours,
       }));
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.getElementById('new-work-order')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sp.get('pre')]);
@@ -74,13 +77,14 @@ export function WorkOrders() {
       });
       setNotice(`WORK ORDER ${r.wo_id} CREATED — ENGINEER APPROVAL RECORDED`);
       setShowForm(false);
-      const wos = await get('/api/work-orders'); setRows(wos);
+      const wos = await get('/api/work-orders'); setRows(wos); sys.bumpRefresh();
     } catch (e: any) { setNotice(`WORK ORDER CREATION FAILED — ${String(e?.message || e).slice(0, 120)}`); }
   };
 
   const move = async (id: string, status: string) => {
     await post(`/api/work-orders/${id}/status`, { status });
     setRows(await get('/api/work-orders'));
+    sys.bumpRefresh();
     if (status === 'Completed') setNotice(`${id} COMPLETED — AIRCRAFT TELEMETRY NORMALIZED, HEALTH RECOVERED`);
   };
 
@@ -90,6 +94,14 @@ export function WorkOrders() {
   const filtered = filter === 'ALL' ? rows : rows.filter((r) => r.status === filter);
   const counts: Record<string, number> = { ALL: rows.length };
   STAGES.forEach((s) => { counts[s] = rows.filter((r) => r.status === s).length; });
+  const activeRows = rows.filter((r) => r.status !== 'Completed');
+  const dueSoon = activeRows.filter((r) => {
+    if (!r.scheduled) return false;
+    const t = new Date(r.scheduled).getTime();
+    return Number.isFinite(t) && t <= Date.now() + 14 * 864e5;
+  }).length;
+  const unassigned = activeRows.filter((r) => r.technician === 'Unassigned').length;
+  const critical = activeRows.filter((r) => r.priority === 'Critical').length;
 
   return (
     <div>
@@ -98,6 +110,9 @@ export function WorkOrders() {
         sub="Approved maintenance tasks from detection to resolution. AI never autonomously authorizes maintenance — every order records engineer approval."
         provenance="HUMAN-IN-THE-LOOP · AUDIT LOGGED"
       >
+        <a className="btn" href="#schedule"><Icon name="calendar" size={12} /> SCHEDULE</a>
+        <Link className="btn" to="/app/history"><Icon name="clock" size={12} /> HISTORY</Link>
+        <Link className="btn" to="/app/technicians"><Icon name="person" size={12} /> TECHNICIANS</Link>
         <button className="btn btn-primary" onClick={() => setShowForm((v) => !v)}>
           <Icon name="clipboard" size={12} /> {showForm ? 'CLOSE FORM' : 'NEW WORK ORDER'}
         </button>
@@ -108,6 +123,14 @@ export function WorkOrders() {
           {notice}
         </div>
       )}
+
+      <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(min(170px,100%),1fr))]" className="mb-3">
+        <Metric label="OPEN WORK ORDERS" value={activeRows.length} st={activeRows.length ? 'warn' : 'ok'} />
+        <Metric label="DUE / OVERDUE · 14D" value={dueSoon} st={dueSoon ? 'alert' : 'ok'} />
+        <Metric label="UNASSIGNED" value={unassigned} st={unassigned ? 'warn' : 'ok'} />
+        <Metric label="CRITICAL PRIORITY" value={critical} st={critical ? 'crit' : 'ok'} />
+        <Metric label="COMPLETED" value={counts.Completed} st="ok" />
+      </MetricGrid>
 
       {/* workflow strip — wraps on narrow viewports, no internal scrolling */}
       <div className="panel mb-3 grid grid-cols-[repeat(auto-fit,minmax(min(160px,100%),1fr))] gap-px overflow-hidden bg-line">
@@ -133,8 +156,9 @@ export function WorkOrders() {
 
       {/* create form */}
       {showForm && (
-        <Panel title="CREATE WORK ORDER" sub="ENGINEER APPROVAL RECORDED ON SUBMIT" icon="clipboard" className="mb-3">
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(190px,100%),1fr))] gap-2">
+        <div id="new-work-order" className="scroll-mt-14">
+          <Panel title="CREATE WORK ORDER" sub="ENGINEER APPROVAL RECORDED ON SUBMIT" icon="clipboard" className="mb-3">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(190px,100%),1fr))] gap-2">
             <label className="block"><span className="tlabel">AIRCRAFT</span>
               <select className="inp mt-1" value={form.aircraft_id} onChange={(e) => setForm({ ...form, aircraft_id: e.target.value })}>
                 {(fleet.length ? fleet.map((a) => a.aircraft_id) : [form.aircraft_id]).map((id: string) => <option key={id}>{id}</option>)}
@@ -168,6 +192,7 @@ export function WorkOrders() {
             <button className="btn btn-primary" onClick={create}><Icon name="check" size={12} /> APPROVE & CREATE</button>
           </div>
         </Panel>
+        </div>
       )}
 
       {/* orders table */}
@@ -237,12 +262,17 @@ export function WorkOrders() {
           COMPLETING A WORK ORDER CLEARS THE SIMULATED DEGRADATION AND RECOVERS COMPONENT HEALTH IN THE SYNTHETIC DATA SET.
         </div>
       </Panel>
+
+      {/* Scheduling/planning is part of this workspace, not a competing
+          top-level destination. The component retains its existing APIs and
+          recommendation-to-work-order flow. */}
+      <Schedule embedded />
     </div>
   );
 }
 
 /* ================= SCHEDULE ================= */
-export function Schedule() {
+export function Schedule({ embedded = false }: { embedded?: boolean }) {
   const sys = useSystem();
   const [rows, setRows] = useState<any[] | null>(null);
   const [recs, setRecs] = useState<any[]>([]);
@@ -263,6 +293,12 @@ export function Schedule() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sys.refreshKey]);
 
+  useEffect(() => {
+    if (embedded && rows && window.location.hash === '#schedule') {
+      requestAnimationFrame(() => document.getElementById('schedule')?.scrollIntoView({ block: 'start' }));
+    }
+  }, [embedded, rows]);
+
   if (err) return <ErrorState title="SCHEDULE UNAVAILABLE" message="Unable to retrieve the maintenance schedule." detail={err} onRetry={() => sys.bumpRefresh()} />;
   if (!rows) return <LoadingState label="FETCHING MAINTENANCE SCHEDULE" />;
 
@@ -271,12 +307,22 @@ export function Schedule() {
   const openRecs = recs.filter((r) => !rows.some((w) => w.aircraft_id === r.aircraft_id && w.component === r.component && w.status !== 'Completed'));
 
   return (
-    <div>
-      <PageHeader
-        title="MAINTENANCE SCHEDULE"
-        sub="Scheduled maintenance windows from approved work orders, with model-recommended slots for open predictions."
-        provenance="SLOTS FROM RECOMMENDATION ENGINE · SYNTHETIC"
-      />
+    <section id={embedded ? 'schedule' : undefined} className={embedded ? 'mt-4 scroll-mt-14 border-t border-line pt-4' : ''}>
+      {embedded ? (
+        <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="font-mono text-[12px] font-semibold uppercase tracking-[0.12em] text-txt">SCHEDULE & PLANNING</h2>
+            <div className="mt-1 text-[11.5px] text-txt-dim">Approved maintenance windows and model-recommended slots for open predictions.</div>
+          </div>
+          <span className="provenance">RECOMMENDATION ENGINE · SYNTHETIC</span>
+        </div>
+      ) : (
+        <PageHeader
+          title="MAINTENANCE SCHEDULE"
+          sub="Scheduled maintenance windows from approved work orders, with model-recommended slots for open predictions."
+          provenance="SLOTS FROM RECOMMENDATION ENGINE · SYNTHETIC"
+        />
+      )}
 
       <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)]">
         <Panel title="SCHEDULED MAINTENANCE" sub={`${rows.length} ENTRIES`} icon="calendar" bodyClass="p-0">
@@ -315,7 +361,7 @@ export function Schedule() {
                     <div className="font-mono text-[12px] text-txt">{r.aircraft_id} <span className="text-txt-dim">· {r.component}</span></div>
                     <div className="mt-0.5 font-mono text-[9.5px] text-txt-faint">SLOT {istDate(r.slot)} · {r.technician.toUpperCase()} · {r.est_hours} H</div>
                   </div>
-                  <Link className="btn btn-xs btn-primary" to={`/app/work-orders?pre=${r.aircraft_id}:${encodeURIComponent(r.component)}&tech=${encodeURIComponent(r.technician)}&parts=${encodeURIComponent((r.parts || []).join(','))}&hours=${r.est_hours}`}>
+                  <Link className="btn btn-xs btn-primary" to={`/app/work-orders?pre=${r.aircraft_id}:${encodeURIComponent(r.component)}&tech=${encodeURIComponent(r.technician)}&parts=${encodeURIComponent((r.parts || []).join(','))}&hours=${r.est_hours}#new-work-order`}>
                     SCHEDULE →
                   </Link>
                 </div>
@@ -324,7 +370,7 @@ export function Schedule() {
           )}
         </Panel>
       </div>
-    </div>
+    </section>
   );
 }
 

@@ -19,11 +19,13 @@ export default function AircraftWorkspace() {
   const { id } = useParams();
   const sys = useSystem();
   const location = useLocation();
+  const navigate = useNavigate();
   // /app/aircraft/:id(/tab) — segment 4 is the workspace tab
   const tab = location.pathname.split('/')[4] || 'overview';
 
   const [detail, setDetail] = useState<any>(null);
   const [preds, setPreds] = useState<any[]>([]);
+  const [fleetOptions, setFleetOptions] = useState<any[]>([]);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => { if (id) sys.setCurrentAircraft(id); /* eslint-disable-next-line */ }, [id]);
@@ -32,12 +34,13 @@ export default function AircraftWorkspace() {
     let alive = true;
     (async () => {
       try {
-        const [d, p] = await Promise.all([
+        const [d, p, ac] = await Promise.all([
           get(`/api/aircraft/${id}`),
           get(`/api/aircraft/${id}/predictions`).catch(() => []),
+          get('/api/aircraft').catch(() => []),
         ]);
         if (!alive) return;
-        setDetail(d); setPreds(p); sys.markUpdated();
+        setDetail(d); setPreds(p); setFleetOptions(ac); sys.markUpdated();
       } catch (e: any) { if (alive) setErr(String(e?.message || e)); }
     })();
     return () => { alive = false; };
@@ -62,8 +65,28 @@ export default function AircraftWorkspace() {
       {/* ---------- header ---------- */}
       <div className="mb-3 border-b border-line pb-3">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <Link to="/app/fleet" className="link font-mono text-[10px] uppercase tracking-[0.1em]">← FLEET</Link>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <Link to="/app/fleet" className="link font-mono text-[10px] uppercase tracking-[0.1em]">← FLEET</Link>
+            <span className="hidden h-4 w-px bg-line-strong sm:block" aria-hidden="true" />
+            <label className="flex min-w-0 items-center gap-2">
+              <span className="tlabel whitespace-nowrap">AIRCRAFT</span>
+              <select
+                className="inp w-auto min-w-[118px] py-1 font-mono text-[11px]"
+                value={detail.aircraft_id}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  sys.setCurrentAircraft(next);
+                  navigate(`/app/aircraft/${next}${tab === 'overview' ? '' : `/${tab}`}`);
+                }}
+                aria-label="Select aircraft"
+              >
+                {(fleetOptions.length ? fleetOptions : [detail]).map((a) => (
+                  <option key={a.aircraft_id} value={a.aircraft_id}>{a.aircraft_id} · {a.platform}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <span className="tlabel">SIMULATION</span>
             <button className="btn btn-xs" onClick={() => sys.degrade(id, topPred?.component || 'Hydraulic System', 0.2)}>
               <Icon name="warning" size={11} /> DEGRADE {compShort[topPred?.component] || 'SYSTEM'}

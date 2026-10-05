@@ -15,17 +15,21 @@ import { useSystem } from './SystemContext';
 
 /* ---------- geometry ---------- */
 const W = 920, H = 400, CY = 200;
+// Nose is at the rounded left end (x≈80); the tail is at the right. The wing
+// tips are therefore swept aft toward increasing x. Keeping this convention
+// in the source geometry (rather than rotating the SVG) also keeps labels,
+// station references and pointer hit areas in the same coordinate system.
 const FUSE = 'M 80 200 C 96 184, 122 176, 162 174 L 560 174 L 624 177 L 782 189 L 846 195 L 846 205 L 782 211 L 624 223 L 560 226 L 162 226 C 122 224, 96 216, 80 200 Z';
-const WING_T = 'M 402 174 L 258 32 L 332 26 L 622 171 Z';
-const WING_B = 'M 402 226 L 258 368 L 332 374 L 622 229 Z';
-const STAB_T = 'M 772 190 L 702 122 L 746 118 L 832 188 Z';
-const STAB_B = 'M 772 210 L 702 278 L 746 282 L 832 212 Z';
+const WING_T = 'M 360 174 L 468 28 L 548 32 L 650 171 Z';
+const WING_B = 'M 360 226 L 468 372 L 548 368 L 650 229 Z';
+const STAB_T = 'M 700 190 L 758 122 L 802 118 L 832 188 Z';
+const STAB_B = 'M 700 210 L 758 278 L 802 282 L 832 212 Z';
 const FIN = 'M 786 196 L 852 196 L 852 204 L 786 204 Z';
 const TANK_C = { x: 470, y: 186, w: 66, h: 28 };
-const TANK_T = 'M 359 131 L 316 89 L 448 84 L 535 128 Z';
-const TANK_B = 'M 359 269 L 316 311 L 448 316 L 535 272 Z';
-const AIL_T = 'M 404 62 L 355 38 L 349 47 L 398 72 Z';
-const AIL_B = 'M 404 338 L 355 362 L 349 353 L 398 328 Z';
+const TANK_T = 'M 414 151 L 474 68 L 531 70 L 588 151 Z';
+const TANK_B = 'M 414 249 L 474 332 L 531 330 L 588 249 Z';
+const AIL_T = 'M 536 44 L 552 50 L 613 143 L 598 148 Z';
+const AIL_B = 'M 536 356 L 552 350 L 613 257 L 598 252 Z';
 const ELEV_T = 'M 762 130 L 790 162 L 797 158 L 769 126 Z';
 const ELEV_B = 'M 762 270 L 790 238 L 797 242 L 769 274 Z';
 
@@ -62,19 +66,19 @@ const MODE_GEO: Record<ModeId, string[]> = {
 
 interface Marker { id: string; comp: string; x: number; y: number; label: string; lx?: number; ly?: number }
 const MARKERS: Marker[] = [
-  { id: 'eng1', comp: 'Engine', x: 289, y: 86, label: 'ENG 01', lx: 289, ly: 62 },
-  { id: 'eng2', comp: 'Engine', x: 289, y: 314, label: 'ENG 02', lx: 289, ly: 336 },
+  { id: 'eng1', comp: 'Engine', x: 477, y: 86, label: 'ENG R / 01', lx: 477, ly: 58 },
+  { id: 'eng2', comp: 'Engine', x: 477, y: 314, label: 'ENG L / 02', lx: 477, ly: 342 },
   { id: 'hyd', comp: 'Hydraulic System', x: 590, y: 200, label: 'HYD PUMP', lx: 590, ly: 172 },
   { id: 'lgN', comp: 'Landing Gear', x: 172, y: 200, label: 'GEAR N', lx: 148, ly: 178 },
   { id: 'lgM', comp: 'Landing Gear', x: 505, y: 150, label: 'GEAR M1', lx: 540, ly: 138 },
   { id: 'lgM2', comp: 'Landing Gear', x: 505, y: 250, label: 'GEAR M2', lx: 540, ly: 264 },
   { id: 'fuelC', comp: 'Fuel System', x: 502, y: 200, label: 'TANK C', lx: 462, ly: 226 },
-  { id: 'fuelW', comp: 'Fuel System', x: 447, y: 108, label: 'TANK W-L', lx: 470, ly: 90 },
+  { id: 'fuelW', comp: 'Fuel System', x: 515, y: 108, label: 'TANK W-R', lx: 535, ly: 88 },
   { id: 'avn', comp: 'Avionics', x: 136, y: 200, label: 'AVN BAY', lx: 118, ly: 222 },
   { id: 'elec', comp: 'Electrical System', x: 310, y: 200, label: 'ELEC BAY', lx: 310, ly: 226 },
   { id: 'thm', comp: 'Cooling System', x: 664, y: 200, label: 'THM XCHG', lx: 700, ly: 172 },
-  { id: 'fcA', comp: '__fc', x: 378, y: 52, label: 'AILERON', lx: 402, ly: 40 },
-  { id: 'fcE', comp: '__fc', x: 782, y: 148, label: 'ELEVATOR', lx: 806, ly: 126 },
+  { id: 'fcA', comp: '__fc', x: 574, y: 100, label: 'AILERON R', lx: 598, ly: 82 },
+  { id: 'fcE', comp: '__fc', x: 782, y: 148, label: 'ELEVATOR R', lx: 806, ly: 126 },
 ];
 
 const healthLabel = (h?: number) => (h == null ? 'UNKNOWN' : h >= 80 ? 'NOMINAL' : h >= 65 ? 'MONITOR' : h >= 50 ? 'DEGRADED' : 'CRITICAL');
@@ -187,7 +191,12 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
         <div className="border-b border-line px-2.5 py-2">
           <div className="seg flex-wrap">
             {MODES.map((m) => (
-              <button key={m.id} className={mode === m.id ? 'on' : ''} onClick={() => setMode(m.id)}>{m.label}</button>
+              <button key={m.id} className={mode === m.id ? 'on' : ''} onClick={() => {
+                setMode(m.id);
+                if (m.id === 'structure') setSel('__structure');
+                else if (m.id === 'flightcontrols') setSel('__fc');
+                else if (m.comps[0]) setSel(m.comps[0]);
+              }}>{m.label}</button>
             ))}
           </div>
         </div>
@@ -215,21 +224,24 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
               ))}
               <line x1={40} y1={12} x2={880} y2={12} stroke="#2A3641" strokeWidth="0.75" />
 
-              {/* centerline */}
+              {/* centerline + explicit orientation reference */}
               <line x1={30} y1={CY} x2={890} y2={CY} stroke="#3A4956" strokeWidth="0.75" strokeDasharray="14 5 3 5" />
+              <g aria-hidden="true">
+                <line x1={128} y1={48} x2={82} y2={48} stroke="#75808B" strokeWidth="0.8" />
+                <path d="M 82 48 L 91 44 M 82 48 L 91 52" fill="none" stroke="#75808B" strokeWidth="0.8" />
+                <text x={134} y={51} fontSize="8" fill="#75808B" fontFamily="IBM Plex Mono" letterSpacing="1">NOSE</text>
+              </g>
 
               {/* ---------- AIRFRAME ---------- */}
               <g opacity={mode === 'structure' ? 1 : 0.62}>
-                {[
-                  ['M 402 174 L 258 32 L 332 26 L 622 171 Z', WING_T],
-                  ['M 402 226 L 258 368 L 332 374 L 622 229 Z', WING_B],
-                ].map((_, i) => null)}
                 <path d={WING_T} fill={mode === 'structure' ? '#1B2E27' : '#131B23'} stroke={mode === 'structure' ? stateColor(healthState(detail?.health)) : '#5E6B77'} strokeWidth="1.25" />
                 <path d={WING_B} fill={mode === 'structure' ? '#1B2E27' : '#131B23'} stroke={mode === 'structure' ? stateColor(healthState(detail?.health)) : '#5E6B77'} strokeWidth="1.25" />
                 <path d={STAB_T} fill="#131B23" stroke="#5E6B77" strokeWidth="1.25" />
                 <path d={STAB_B} fill="#131B23" stroke="#5E6B77" strokeWidth="1.25" />
                 <path d={FIN} fill="#131B23" stroke="#5E6B77" strokeWidth="1.25" />
                 <path d={FUSE} fill={mode === 'structure' ? '#16241E' : '#161F27'} stroke={mode === 'structure' ? stateColor(healthState(detail?.health)) : '#6E7B87'} strokeWidth="1.5" />
+                <text x={566} y={24} fontSize="7.5" fill="#5A646E" textAnchor="middle" fontFamily="IBM Plex Mono" letterSpacing="1">R WING</text>
+                <text x={566} y={388} fontSize="7.5" fill="#5A646E" textAnchor="middle" fontFamily="IBM Plex Mono" letterSpacing="1">L WING</text>
                 {/* structural frames (structure mode) */}
                 {mode === 'structure' && [150, 240, 330, 420, 510, 600, 690, 770].map((x) => (
                   <line key={x} x1={x} y1={175} x2={x} y2={225} stroke="#3A4956" strokeWidth="0.75" strokeDasharray="3 3" />
@@ -254,7 +266,7 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
 
               {/* ---------- PROPULSION ---------- */}
               <g opacity={geoActive('propulsion') ? 1 : 0.35}>
-                {[[252, 74], [252, 303]].map(([x, y], i) => (
+                {[[438, 74], [438, 303]].map(([x, y], i) => (
                   <g key={i} data-hot onClick={() => selectComp('Engine', 'propulsion')}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectComp('Engine', 'propulsion'); } }}
                     tabIndex={0} role="button" aria-label={`Engine ${i + 1} nacelle — select propulsion system`}
@@ -268,7 +280,7 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
 
               {/* ---------- HYDRAULICS ---------- */}
               <g opacity={geoActive('hydraulics') ? 1 : 0.3}>
-                <path d="M 330 88 L 430 118 L 478 156 M 330 312 L 430 282 L 478 244 M 478 195 L 180 199 M 490 195 L 505 160 M 490 205 L 505 240 M 478 200 L 700 197 L 796 200"
+                <path d="M 516 86 L 548 116 L 566 156 M 516 314 L 548 284 L 566 244 M 566 195 L 180 199 M 566 195 L 505 160 M 566 205 L 505 240 M 566 200 L 700 197 L 796 200"
                   fill="none" stroke="#56A8CC" strokeWidth={geoActive('hydraulics') ? 1.25 : 0.75} strokeDasharray="5 3" />
                 <rect x={566} y={186} width={48} height={28} fill={geoActive('hydraulics') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1.25" />
                 <text x={590} y={203} fontSize="8" fill="#75808B" textAnchor="middle" fontFamily="IBM Plex Mono">PUMP</text>
@@ -277,7 +289,7 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
               {/* ---------- ELECTRICAL ---------- */}
               <g opacity={geoActive('electrical') ? 1 : 0.3}>
                 <line x1={160} y1={CY} x2={830} y2={CY} stroke="#56A8CC" strokeWidth={geoActive('electrical') ? 1 : 0.6} strokeDasharray="2 3" />
-                {[326, 326].map((x, i) => (
+                {[512, 512].map((x, i) => (
                   <rect key={i} x={x} y={i === 0 ? 80 : 308} width={9} height={9} fill="#1E3A47" stroke="#56A8CC" strokeWidth="1" />
                 ))}
                 <rect x={294} y={190} width={32} height={20} fill={geoActive('electrical') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1.25" />
