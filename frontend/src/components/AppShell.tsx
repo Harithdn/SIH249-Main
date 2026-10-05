@@ -70,12 +70,18 @@ function NavSidebar({ onNavigate, idPrefix = '' }: { onNavigate?: () => void; id
   const nav = useNavigate();
   const location = useLocation();
 
-  // Context-driven aircraft routes all belong to the single Aircraft item.
+  // Route-aware nav state. Aircraft context routes are aliases in the sidebar:
+  // /app/aircraft/:id is the Aircraft item, while /app/aircraft/:id/twin
+  // must select Digital Twin even though it shares the aircraft URL prefix.
   const isActive = (path: string) => {
     const p = location.pathname;
+    const aircraftPath = /^\/app\/aircraft\/[^/]+(?:\/(telemetry|diagnostics))?\/?$/;
+    const twinPath = /^\/app\/aircraft\/[^/]+\/twin\/?$/;
+
     if (path === '/app') return p === '/app';
-    if (path === '/app/aircraft') return p.startsWith('/app/aircraft');
-    return p.startsWith(path);
+    if (path === '/app/twin') return p === '/app/twin' || twinPath.test(p);
+    if (path === '/app/aircraft') return p === '/app/aircraft' || aircraftPath.test(p);
+    return p === path || p.startsWith(`${path}/`);
   };
 
   // category containing the current route — expanded automatically on
@@ -90,12 +96,15 @@ function NavSidebar({ onNavigate, idPrefix = '' }: { onNavigate?: () => void; id
 
   return (
     <>
-      <div className="shrink-0 border-b border-line px-4 py-3.5">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="AeroSentinel" className="h-11 w-11 shrink-0 object-contain mix-blend-multiply" />
-          <div className="min-w-0 font-mono uppercase leading-[1.45] tracking-[0.1em]">
-            <div className="text-[11px] font-semibold text-txt">FLEET OPERATIONS</div>
-            <div className="text-[9px] text-txt-faint">PREDICTIVE MAINTENANCE</div>
+      <div className="shrink-0 border-b border-line px-4 py-4">
+        <div className="flex flex-col items-center gap-2.5 text-center">
+          <img
+            src="/final logo.png"
+            alt="AeroSentinel"
+            className="h-auto w-full max-w-[184px] object-contain"
+          />
+          <div className="whitespace-nowrap font-mono text-[10px] font-semibold uppercase leading-none tracking-[0.12em] text-txt-dim">
+            PREDICTIVE MAINTENANCE
           </div>
         </div>
       </div>
@@ -126,7 +135,7 @@ function NavSidebar({ onNavigate, idPrefix = '' }: { onNavigate?: () => void; id
               {isOpen && (
                 <div id={`nav-${idPrefix}${g.group}`} className="mb-2 ml-[28px] mt-1 border-l border-line-strong pl-2">
                   {g.items.map(([label, path]) => (
-                    <NavLink key={path} to={path} onClick={onNavigate}
+                    <NavLink key={path} to={path} end onClick={onNavigate}
                       className={`relative block rounded-[2px] px-2.5 py-1.5 text-[13px] leading-[1.4] transition-colors ${
                         isActive(path) ? 'bg-[#e2f1fa] font-medium text-acc before:absolute before:-left-[9px] before:top-1/2 before:h-4 before:w-px before:-translate-y-1/2 before:bg-acc' : 'text-txt-dim hover:bg-surface2 hover:text-txt'
                       }`}
