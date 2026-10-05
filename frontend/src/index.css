@@ -254,17 +254,17 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
   transition: none;
 }
-.btn:hover { background: #eef4f8; border-color: #3a4956; }
+.btn:hover { background: #eef4f8; border-color: var(--acc); }
 .btn:active { background: #e6eef4; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-primary {
   background: var(--acc);
   border-color: var(--acc);
-  color: #081014;
+  color: #ffffff;
 }
 .btn-primary:hover { background: #6fbedd; border-color: #6fbedd; }
-.btn-danger { color: var(--crit); border-color: #4a2525; }
-.btn-danger:hover { background: var(--crit-dim, #261313); border-color: #6b3030; }
+.btn-danger { color: var(--crit); border-color: #f0caca; }
+.btn-danger:hover { background: var(--crit-dim, #fdecec); border-color: #c0393b; }
 .btn-xs { padding: 3px 8px; font-size: 10px; min-height: 22px; }
 /* icon-only control keeps a usable hit area */
 .btn-icon { padding: 4px 6px; min-width: 26px; }
@@ -282,7 +282,7 @@ h1, h2, h3, h4, h5, h6 {
   min-width: 0;
   max-width: 100%;
 }
-.inp::placeholder { color: #5a646e; }
+.inp::placeholder { color: var(--txt-faint); opacity: 1; }
 .inp:focus { outline: none; border-color: var(--acc); }
 select.inp { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
 input[type='range'].inp { padding: 0; accent-color: var(--acc); height: 4px; }

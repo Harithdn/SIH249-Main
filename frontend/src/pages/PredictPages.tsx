@@ -262,7 +262,7 @@ export function Rul() {
         <Panel title="COMPONENTS BY URGENCY" sub={`${filtered.length} TRACKED`} icon="clock" bodyClass="p-0">
           <div className="scrollpanel divide-y divide-line">
             {filtered.length === 0 ? <div className="p-3"><EmptyState title="NO MATCHES" message="No RUL records match the search." /></div> : filtered.map((r, i) => (
-              <button key={i} className={`block w-full px-3 py-2 text-left ${i === selIdx ? 'bg-[#14222B]' : 'hover:bg-surface2'}`}
+              <button key={i} className={`block w-full px-3 py-2 text-left ${i === selIdx ? 'bg-[#e7f1f6]' : 'hover:bg-surface2'}`}
                 onClick={() => setSelIdx(i)}>
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-[12px] text-txt">{r.aircraft_id}</span>

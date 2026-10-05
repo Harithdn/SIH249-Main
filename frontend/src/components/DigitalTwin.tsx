@@ -210,7 +210,7 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
             aria-label={`Aircraft ${aid} digital twin schematic, subsystem mode ${MODES.find((m) => m.id === mode)?.label}`}>
             <defs>
               <pattern id="hatchP" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="0" x2="0" y2="6" stroke="#3A4956" strokeWidth="1" />
+                <line x1="0" y1="0" x2="0" y2="6" stroke="#c2ced8" strokeWidth="1" />
               </pattern>
             </defs>
 
@@ -218,49 +218,49 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
               {/* station reference */}
               {stations.map((x) => (
                 <g key={x}>
-                  <line x1={x} y1={8} x2={x} y2={16} stroke="#2A3641" strokeWidth="1" />
-                  <text x={x} y={26} fontSize="7.5" fill="#5A646E" textAnchor="middle" fontFamily="IBM Plex Mono" letterSpacing="1">FS {x}</text>
+                  <line x1={x} y1={8} x2={x} y2={16} stroke="#c2ced8" strokeWidth="1" />
+                  <text x={x} y={26} fontSize="7.5" fill="#607080" textAnchor="middle" fontFamily="IBM Plex Mono" letterSpacing="1">FS {x}</text>
                 </g>
               ))}
-              <line x1={40} y1={12} x2={880} y2={12} stroke="#2A3641" strokeWidth="0.75" />
+              <line x1={40} y1={12} x2={880} y2={12} stroke="#c2ced8" strokeWidth="0.75" />
 
               {/* centerline + explicit orientation reference */}
-              <line x1={30} y1={CY} x2={890} y2={CY} stroke="#3A4956" strokeWidth="0.75" strokeDasharray="14 5 3 5" />
+              <line x1={30} y1={CY} x2={890} y2={CY} stroke="#c2ced8" strokeWidth="0.75" strokeDasharray="14 5 3 5" />
               <g aria-hidden="true">
-                <line x1={128} y1={48} x2={82} y2={48} stroke="#75808B" strokeWidth="0.8" />
-                <path d="M 82 48 L 91 44 M 82 48 L 91 52" fill="none" stroke="#75808B" strokeWidth="0.8" />
-                <text x={134} y={51} fontSize="8" fill="#75808B" fontFamily="IBM Plex Mono" letterSpacing="1">NOSE</text>
+                <line x1={128} y1={48} x2={82} y2={48} stroke="#607080" strokeWidth="0.8" />
+                <path d="M 82 48 L 91 44 M 82 48 L 91 52" fill="none" stroke="#607080" strokeWidth="0.8" />
+                <text x={134} y={51} fontSize="8" fill="#607080" fontFamily="IBM Plex Mono" letterSpacing="1">NOSE</text>
               </g>
 
               {/* ---------- AIRFRAME ---------- */}
               <g opacity={mode === 'structure' ? 1 : 0.62}>
-                <path d={WING_T} fill={mode === 'structure' ? '#1B2E27' : '#131B23'} stroke={mode === 'structure' ? stateColor(healthState(detail?.health)) : '#5E6B77'} strokeWidth="1.25" />
-                <path d={WING_B} fill={mode === 'structure' ? '#1B2E27' : '#131B23'} stroke={mode === 'structure' ? stateColor(healthState(detail?.health)) : '#5E6B77'} strokeWidth="1.25" />
-                <path d={STAB_T} fill="#131B23" stroke="#5E6B77" strokeWidth="1.25" />
-                <path d={STAB_B} fill="#131B23" stroke="#5E6B77" strokeWidth="1.25" />
-                <path d={FIN} fill="#131B23" stroke="#5E6B77" strokeWidth="1.25" />
-                <path d={FUSE} fill={mode === 'structure' ? '#16241E' : '#161F27'} stroke={mode === 'structure' ? stateColor(healthState(detail?.health)) : '#6E7B87'} strokeWidth="1.5" />
-                <text x={566} y={24} fontSize="7.5" fill="#5A646E" textAnchor="middle" fontFamily="IBM Plex Mono" letterSpacing="1">R WING</text>
-                <text x={566} y={388} fontSize="7.5" fill="#5A646E" textAnchor="middle" fontFamily="IBM Plex Mono" letterSpacing="1">L WING</text>
+                <path d={WING_T} fill={mode === 'structure' ? '#e5f4eb' : '#f7f9fb'} stroke={mode === 'structure' ? stateColor(healthState(detail?.health)) : '#7890a0'} strokeWidth="1.25" />
+                <path d={WING_B} fill={mode === 'structure' ? '#e5f4eb' : '#f7f9fb'} stroke={mode === 'structure' ? stateColor(healthState(detail?.health)) : '#7890a0'} strokeWidth="1.25" />
+                <path d={STAB_T} fill="#f7f9fb" stroke="#7890a0" strokeWidth="1.25" />
+                <path d={STAB_B} fill="#f7f9fb" stroke="#7890a0" strokeWidth="1.25" />
+                <path d={FIN} fill="#f7f9fb" stroke="#7890a0" strokeWidth="1.25" />
+                <path d={FUSE} fill={mode === 'structure' ? '#e5f4eb' : '#f4f7f9'} stroke={mode === 'structure' ? stateColor(healthState(detail?.health)) : '#7890a0'} strokeWidth="1.5" />
+                <text x={566} y={24} fontSize="7.5" fill="#607080" textAnchor="middle" fontFamily="IBM Plex Mono" letterSpacing="1">R WING</text>
+                <text x={566} y={388} fontSize="7.5" fill="#607080" textAnchor="middle" fontFamily="IBM Plex Mono" letterSpacing="1">L WING</text>
                 {/* structural frames (structure mode) */}
                 {mode === 'structure' && [150, 240, 330, 420, 510, 600, 690, 770].map((x) => (
-                  <line key={x} x1={x} y1={175} x2={x} y2={225} stroke="#3A4956" strokeWidth="0.75" strokeDasharray="3 3" />
+                  <line key={x} x1={x} y1={175} x2={x} y2={225} stroke="#c2ced8" strokeWidth="0.75" strokeDasharray="3 3" />
                 ))}
               </g>
 
               {/* ---------- FLIGHT CONTROLS ---------- */}
               <g opacity={geoActive('fc') ? 1 : 0.3}>
                 {[AIL_T, AIL_B, ELEV_T, ELEV_B].map((d, i) => (
-                  <path key={i} d={d} fill={geoActive('fc') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1" />
+                  <path key={i} d={d} fill={geoActive('fc') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1" />
                 ))}
-                <rect x={832} y={195} width={16} height={10} fill={geoActive('fc') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1" />
+                <rect x={832} y={195} width={16} height={10} fill={geoActive('fc') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1" />
               </g>
 
               {/* ---------- FUEL ---------- */}
               <g opacity={geoActive('fuel') ? 1 : 0.3}>
-                <rect {...TANK_C} fill={geoActive('fuel') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1" />
-                <path d={TANK_T} fill={geoActive('fuel') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1" />
-                <path d={TANK_B} fill={geoActive('fuel') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1" />
+                <rect {...TANK_C} fill={geoActive('fuel') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1" />
+                <path d={TANK_T} fill={geoActive('fuel') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1" />
+                <path d={TANK_B} fill={geoActive('fuel') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1" />
                 <path d="M 470 200 L 420 170 M 470 200 L 420 230 M 536 200 L 590 200" stroke="#56A8CC" strokeWidth="0.75" strokeDasharray="3 3" fill="none" />
               </g>
 
@@ -271,9 +271,9 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectComp('Engine', 'propulsion'); } }}
                     tabIndex={0} role="button" aria-label={`Engine ${i + 1} nacelle — select propulsion system`}
                     style={{ cursor: 'pointer' }}>
-                    <rect x={x} y={y} width={78} height={23} fill={geoActive('propulsion') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1.25" />
+                    <rect x={x} y={y} width={78} height={23} fill={geoActive('propulsion') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1.25" />
                     <circle cx={x + 9} cy={y + 11.5} r={7} fill="none" stroke="#56A8CC" strokeWidth="1" />
-                    <line x1={x + 22} y1={y + 11.5} x2={x + 70} y2={y + 11.5} stroke="#3A4956" strokeWidth="0.75" strokeDasharray="3 2" />
+                    <line x1={x + 22} y1={y + 11.5} x2={x + 70} y2={y + 11.5} stroke="#c2ced8" strokeWidth="0.75" strokeDasharray="3 2" />
                   </g>
                 ))}
               </g>
@@ -282,40 +282,40 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
               <g opacity={geoActive('hydraulics') ? 1 : 0.3}>
                 <path d="M 516 86 L 548 116 L 566 156 M 516 314 L 548 284 L 566 244 M 566 195 L 180 199 M 566 195 L 505 160 M 566 205 L 505 240 M 566 200 L 700 197 L 796 200"
                   fill="none" stroke="#56A8CC" strokeWidth={geoActive('hydraulics') ? 1.25 : 0.75} strokeDasharray="5 3" />
-                <rect x={566} y={186} width={48} height={28} fill={geoActive('hydraulics') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1.25" />
-                <text x={590} y={203} fontSize="8" fill="#75808B" textAnchor="middle" fontFamily="IBM Plex Mono">PUMP</text>
+                <rect x={566} y={186} width={48} height={28} fill={geoActive('hydraulics') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1.25" />
+                <text x={590} y={203} fontSize="8" fill="#607080" textAnchor="middle" fontFamily="IBM Plex Mono">PUMP</text>
               </g>
 
               {/* ---------- ELECTRICAL ---------- */}
               <g opacity={geoActive('electrical') ? 1 : 0.3}>
                 <line x1={160} y1={CY} x2={830} y2={CY} stroke="#56A8CC" strokeWidth={geoActive('electrical') ? 1 : 0.6} strokeDasharray="2 3" />
                 {[512, 512].map((x, i) => (
-                  <rect key={i} x={x} y={i === 0 ? 80 : 308} width={9} height={9} fill="#1E3A47" stroke="#56A8CC" strokeWidth="1" />
+                  <rect key={i} x={x} y={i === 0 ? 80 : 308} width={9} height={9} fill="#dcecf5" stroke="#56A8CC" strokeWidth="1" />
                 ))}
-                <rect x={294} y={190} width={32} height={20} fill={geoActive('electrical') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1.25" />
-                <text x={310} y={203} fontSize="7.5" fill="#75808B" textAnchor="middle" fontFamily="IBM Plex Mono">BUS</text>
+                <rect x={294} y={190} width={32} height={20} fill={geoActive('electrical') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1.25" />
+                <text x={310} y={203} fontSize="7.5" fill="#607080" textAnchor="middle" fontFamily="IBM Plex Mono">BUS</text>
               </g>
 
               {/* ---------- AVIONICS ---------- */}
               <g opacity={geoActive('avionics') ? 1 : 0.3}>
-                <rect x={112} y={183} width={48} height={34} fill={geoActive('avionics') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1.25" />
+                <rect x={112} y={183} width={48} height={34} fill={geoActive('avionics') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1.25" />
                 <rect x={120} y={191} width={32} height={18} fill="url(#hatchP)" stroke="none" />
                 <line x1={162} y1={182} x2={176} y2={182} stroke="#56A8CC" strokeWidth="1" />
               </g>
 
               {/* ---------- THERMAL ---------- */}
               <g opacity={geoActive('thermal') ? 1 : 0.3}>
-                <rect x={640} y={185} width={48} height={30} fill={geoActive('thermal') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1.25" />
+                <rect x={640} y={185} width={48} height={30} fill={geoActive('thermal') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1.25" />
                 {[192, 200, 208].map((y) => (
-                  <line key={y} x1={648} y1={y} x2={680} y2={y} stroke="#3A4956" strokeWidth="0.75" />
+                  <line key={y} x1={648} y1={y} x2={680} y2={y} stroke="#c2ced8" strokeWidth="0.75" />
                 ))}
               </g>
 
               {/* ---------- LANDING GEAR ---------- */}
               <g opacity={geoActive('landinggear') ? 1 : 0.3}>
-                <rect x={166} y={194} width={13} height={12} fill={geoActive('landinggear') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1.25" />
-                <rect x={498} y={153} width={14} height={14} fill={geoActive('landinggear') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1.25" />
-                <rect x={498} y={233} width={14} height={14} fill={geoActive('landinggear') ? '#1E3A47' : '#11181F'} stroke="#56A8CC" strokeWidth="1.25" />
+                <rect x={166} y={194} width={13} height={12} fill={geoActive('landinggear') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1.25" />
+                <rect x={498} y={153} width={14} height={14} fill={geoActive('landinggear') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1.25" />
+                <rect x={498} y={233} width={14} height={14} fill={geoActive('landinggear') ? '#dcecf5' : '#eef4f8'} stroke="#56A8CC" strokeWidth="1.25" />
                 <line x1={505} y1={167} x2={505} y2={174} stroke="#56A8CC" strokeWidth="1" />
                 <line x1={505} y1={233} x2={505} y2={226} stroke="#56A8CC" strokeWidth="1" />
                 <line x1={172} y1={206} x2={172} y2={212} stroke="#56A8CC" strokeWidth="1" />
@@ -340,13 +340,13 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
                     style={{ cursor: 'pointer' }} opacity={dim ? 0.4 : 1}>
                     <title>{`${mk.label} — ${compByName[mk.comp]?.name || 'Flight controls'} · health ${comp?.health ?? '—'}`}</title>
                     <rect x={mk.x - 11} y={mk.y - 11} width={22} height={22} fill="transparent" />
-                    {anom && <path d={`M ${mk.x} ${mk.y - 17} l 5 8 h -10 Z`} fill="none" stroke="#D4AC55" strokeWidth="1" />}
+                    {anom && <path d={`M ${mk.x} ${mk.y - 17} l 5 8 h -10 Z`} fill="none" stroke="#b7791f" strokeWidth="1" />}
                     {selected && <rect x={mk.x - 8} y={mk.y - 8} width={16} height={16} fill="none" stroke="#56A8CC" strokeWidth="1.5" />}
-                    <rect x={mk.x - 4.5} y={mk.y - 4.5} width={9} height={9} fill={c} stroke="#0B1015" strokeWidth="1" />
+                    <rect x={mk.x - 4.5} y={mk.y - 4.5} width={9} height={9} fill={c} stroke="#ffffff" strokeWidth="1" />
                     {selected && (
                       <>
                         <line x1={mk.x} y1={mk.y - 8} x2={mk.lx ?? mk.x} y2={(mk.ly ?? mk.y) + 8} stroke="#56A8CC" strokeWidth="0.75" />
-                        <text x={mk.lx ?? mk.x} y={mk.ly ?? mk.y} fontSize="9" fill="#6FBEDD" textAnchor="middle" fontFamily="IBM Plex Mono" letterSpacing="0.5">{mk.label}</text>
+                        <text x={mk.lx ?? mk.x} y={mk.ly ?? mk.y} fontSize="9" fill="#1677b8" textAnchor="middle" fontFamily="IBM Plex Mono" letterSpacing="0.5">{mk.label}</text>
                       </>
                     )}
                   </g>
@@ -365,8 +365,8 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
         {/* legend */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line px-3 py-2">
           {[
-            ['#6FB789', 'NOMINAL ≥80'], ['#D4AC55', 'MONITOR 65–79'], ['#D98B54', 'DEGRADED 50–64'],
-            ['#D97070', 'CRITICAL <50'], ['#D4AC55', '▲ ANOMALY'],
+            ['#238a5b', 'NOMINAL ≥80'], ['#b7791f', 'MONITOR 65–79'], ['#c45d21', 'DEGRADED 50–64'],
+            ['#c0393b', 'CRITICAL <50'], ['#b7791f', '▲ ANOMALY'],
           ].map(([c, l]) => (
             <span key={l as string} className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.06em] text-txt-faint">
               <span className="inline-block h-[8px] w-[8px]" style={{ background: c as string }} aria-hidden="true" />{l}

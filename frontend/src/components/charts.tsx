@@ -9,9 +9,9 @@ import {
 } from 'recharts';
 
 export const CHART = {
-  grid: '#18222B',
-  axis: '#2A3641',
-  tick: '#75808B',
+  grid: '#e3e9ef',
+  axis: '#c2ced8',
+  tick: '#607080',
   primary: '#56A8CC',
   secondary: '#8A95A0',
   tertiary: '#6FB789',
@@ -34,7 +34,7 @@ function TipBox({ active, payload, label, labelFmt, unit, digits = 2 }: any) {
   const fmtNum = (v: number) =>
     Number.isFinite(v) ? v.toLocaleString('en-US', { maximumFractionDigits: maxFd, minimumFractionDigits: minFd }) : '—';
   return (
-    <div className="border border-line-strong bg-[#0C1218] px-2.5 py-2 shadow-none">
+    <div className="border border-line-strong bg-[#ffffff] px-2.5 py-2 shadow-none">
       <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.08em] text-txt-faint">
         {labelFmt ? labelFmt(label, payload) : label}
       </div>
@@ -219,8 +219,8 @@ export function ParetoChart({ data, height = 240 }: { data: { component: string;
               .toUpperCase()} interval={0} />
           <YAxis yAxisId="l" tickLine={false} axisLine={false} width={30} allowDecimals={false} />
           <YAxis yAxisId="r" orientation="right" domain={[0, 100]} tickLine={false} axisLine={false} width={38} tickFormatter={(v: any) => `${v}%`} />
-          <Tooltip content={<TipBox digits={0} />} cursor={{ fill: '#141C24' }} />
-          <Bar yAxisId="l" dataKey="failures" name="PREDICTED FAILURES" fill="#1E3A47" stroke={CHART.primary} strokeWidth={1} isAnimationActive={false} barSize={26} />
+          <Tooltip content={<TipBox digits={0} />} cursor={{ fill: '#eef3f7' }} />
+          <Bar yAxisId="l" dataKey="failures" name="PREDICTED FAILURES" fill="#dcecf5" stroke={CHART.primary} strokeWidth={1} isAnimationActive={false} barSize={26} />
           <Line yAxisId="r" type="linear" dataKey="cum_pct" name="CUMULATIVE %" stroke={CHART.warn} strokeWidth={1.5} dot={{ r: 2, fill: CHART.warn, strokeWidth: 0 }} isAnimationActive={false} />
         </ComposedChart>
       </ResponsiveContainer>
