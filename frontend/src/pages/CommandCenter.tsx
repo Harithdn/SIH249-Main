@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { get } from '../services/api';
 import { useSystem } from '../components/SystemContext';
 import { Panel, PageHeader, Metric, MetricGrid, StatusTag, StateTag, LoadingState, ErrorState, EmptyState } from '../components/ui';
-import { AvailabilityChart } from '../components/charts';
+import { AvailabilityChart, Spark } from '../components/charts';
 import { Icon } from '../components/icons';
 import { num, pctOf, probState, rulState, healthState, stateColor, statusLabel, istClock } from '../lib/format';
 
@@ -33,18 +33,20 @@ export default function CommandCenter() {
   const [preds, setPreds] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [insights, setInsights] = useState<any[]>([]);
+  const [workOrders, setWorkOrders] = useState<any[]>([]);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const [dd, fl, pr, al, ins] = await Promise.all([
+        const [dd, fl, pr, al, ins, wo] = await Promise.all([
           get('/api/dashboard'), get('/api/fleet'),
           get('/api/predictions?min_risk=0.35'), get('/api/alerts'), get('/api/insights'),
+          get('/api/work-orders').catch(() => []),
         ]);
         if (!alive) return;
-        setD(dd); setFleet(fl); setPreds(pr); setAlerts(al); setInsights(ins);
+        setD(dd); setFleet(fl); setPreds(pr); setAlerts(al); setInsights(ins); setWorkOrders(wo);
         sys.markUpdated();
       } catch (e: any) { if (alive) setErr(String(e?.message || e)); }
     })();
@@ -98,7 +100,31 @@ export default function CommandCenter() {
     { label: 'WARNING', n: sc['At Risk'], color: stateColor('alert') },
     { label: 'AOG', n: sc.Critical, color: stateColor('crit') },
   ];
+  const healthSegs = [
+    { label: 'HEALTHY', n: dist.Healthy ?? 0, color: stateColor('ok') },
+    { label: 'MONITOR', n: dist.Monitoring ?? 0, color: stateColor('warn') },
+    { label: 'AT RISK', n: dist['At Risk'] ?? 0, color: stateColor('alert') },
+    { label: 'CRITICAL', n: dist.Critical ?? 0, color: stateColor('crit') },
+  ];
   const readinessColor = stateColor(d.availability >= 75 ? 'ok' : d.availability >= 60 ? 'warn' : 'crit');
+  const averageHealth = aircraft.length
+    ? aircraft.reduce((sum, a) => sum + (Number(a.health) || 0), 0) / aircraft.length
+    : 0;
+  const criticalComponents = preds.filter((p) => p.rul <= 30 || p.failure_prob >= 0.75).length;
+  const highestRisk = queue[0];
+  const activeMaintenance = workOrders.filter((w) => ['Scheduled', 'In Progress'].includes(w.status)).length;
+  const unassignedMaintenance = workOrders.filter((w) => w.status !== 'Completed' && w.technician === 'Unassigned').length;
+  const now = Date.now();
+  const upcomingMaintenance = workOrders.filter((w) => {
+    if (w.status === 'Completed' || !w.scheduled) return false;
+    const t = new Date(w.scheduled).getTime();
+    return Number.isFinite(t) && t >= now - 864e5 && t <= now + 14 * 864e5;
+  }).length;
+  const readinessHistory = fleet.history || [];
+  const currentTrend = readinessHistory.length > 1
+    ? (readinessHistory[readinessHistory.length - 1]?.operational ?? d.availability) -
+      (readinessHistory[Math.max(0, readinessHistory.length - 8)]?.operational ?? d.availability)
+    : 0;
 
   return (
     <div>
@@ -135,12 +161,12 @@ export default function CommandCenter() {
       </div>
 
       {/* ---------------- SECTION 2 + 3 ---------------- */}
-      <div className="mb-3 grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+      <div className="mb-3 grid items-stretch gap-3 xl:grid-cols-[minmax(0,2.35fr)_minmax(340px,0.85fr)]">
         {/* fleet status board — cards fill the width; a readiness summary rail
             occupies the right side; a readiness distribution strip fills the
             lower edge. Every figure derives from the live fetches above. */}
         <Panel title="SECTION 02 — FLEET STATUS BOARD" sub="SELECT AIRCRAFT TO OPEN WORKSPACE" icon="aircraft">
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,238px)]">
+          <div className="grid gap-3 2xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.9fr)]">
             {/* aircraft cards grouped by base */}
             <div className="min-w-0 space-y-3">
               {Object.entries(byBase).map(([base, list]) => (
@@ -220,48 +246,91 @@ export default function CommandCenter() {
               </div>
             </div>
 
-            {/* fleet readiness summary rail — occupies the right of the board */}
-            <aside className="min-w-0 self-start border border-line bg-inset" aria-label="Fleet readiness summary">
-              <div className="border-b border-line bg-surface2 px-3 py-1.5">
-                <span className="tlabel tlabel-dim">FLEET READINESS SUMMARY</span>
+            {/* Operational summary uses the board's second column for actual
+                fleet, prediction and maintenance data rather than stretching
+                aircraft cards or leaving an empty rail. */}
+            <aside className="flex min-w-0 flex-col border border-line bg-inset" aria-label="Fleet readiness summary">
+              <div className="border-b border-line bg-surface2 px-3 py-2">
+                <span className="tlabel tlabel-dim">OPERATIONAL READINESS SUMMARY</span>
               </div>
-              <div className="px-3 py-2.5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="font-mono text-[24px] leading-none num" style={{ color: readinessColor }}>
-                    {num(d.availability, 1)}<span className="text-[13px]">%</span>
-                  </span>
-                  <span className="text-right font-mono text-[9px] uppercase leading-tight tracking-[0.08em] text-txt-faint">MISSION<br />READY</span>
-                </div>
-                <div className="mt-2 h-[3px] w-full border border-line-strong bg-base" aria-hidden="true">
-                  <div className="h-full" style={{ width: `${Math.max(0, Math.min(100, d.availability))}%`, background: readinessColor }} />
-                </div>
-                <div className="mt-1.5 font-mono text-[9px] uppercase tracking-[0.05em] text-txt-faint">
-                  {d.operational} OF {d.fleet_size} OPERATIONAL
-                </div>
-
-                <div className="mt-2.5 space-y-1 border-t border-line pt-2">
-                  {distSegs.map((s) => <SumRow key={s.label} label={s.label} value={s.n} dot={s.color} />)}
-                </div>
-
-                <div className="mt-2.5 space-y-1 border-t border-line pt-2">
-                  <SumRow label="ACTIVE ALERTS" value={alerts.length} color={alerts.length ? stateColor('crit') : undefined} />
-                  <SumRow label="PRED FAILURE 30D" value={d.predicted_30d} color={d.predicted_30d > 0 ? stateColor('alert') : undefined} />
-                  <SumRow label="REQ. ATTENTION" value={attention.size} color={attention.size > 0 ? stateColor('alert') : undefined} />
-                  <SumRow label="WO BACKLOG" value={d.backlog} color={d.backlog > 0 ? stateColor('warn') : undefined} />
-                </div>
-
-                {lowestRul && (
-                  <div className="mt-2.5 border-t border-line pt-2">
-                    <SumRow label={`LOWEST RUL · ${lowestRul.id}`}
-                      value={`${num(lowestRul.rul, 0)} D`}
-                      color={stateColor(rulState(lowestRul.rul))} />
-                    <div className="mt-1 font-mono text-[9px] uppercase tracking-[0.05em] text-txt-faint">
-                      ELEVATED-RISK COMPONENTS · P≥35%
+              <div className="flex flex-1 flex-col px-3 py-3">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+                  <div>
+                    <div className="tlabel">MISSION READY</div>
+                    <div className="mt-1 font-mono text-[30px] leading-none num" style={{ color: readinessColor }}>
+                      {num(d.availability, 1)}<span className="text-[14px]">%</span>
+                    </div>
+                    <div className="mt-1.5 font-mono text-[9.5px] uppercase tracking-[0.05em] text-txt-faint">
+                      {d.operational} OF {d.fleet_size} OPERATIONAL
                     </div>
                   </div>
-                )}
+                  <div className="min-w-0 text-right">
+                    <Spark data={readinessHistory} dataKey="operational" width={124} height={36} color={readinessColor} />
+                    <div className={`mt-1 font-mono text-[9.5px] num ${currentTrend >= 0 ? 'text-ok' : 'text-crit'}`}>
+                      7D {currentTrend > 0 ? '+' : ''}{num(currentTrend, 1)} PT
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2.5 h-[5px] w-full border border-line-strong bg-base" aria-hidden="true">
+                  <div className="h-full" style={{ width: `${Math.max(0, Math.min(100, d.availability))}%`, background: readinessColor }} />
+                </div>
 
-                <Link to="/app/fleet" className="link mt-2.5 block border-t border-line pt-2 font-mono text-[10.5px] uppercase tracking-[0.08em]">
+                <div className="mt-3 grid grid-cols-2 gap-px overflow-hidden border border-line bg-line sm:grid-cols-4 2xl:grid-cols-2">
+                  {distSegs.map((s) => (
+                    <div key={s.label} className="min-w-0 bg-surface px-2.5 py-2">
+                      <div className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.06em] text-txt-faint">
+                        <span className="h-[7px] w-[7px] shrink-0" style={{ background: s.color }} aria-hidden="true" />
+                        <span className="truncate">{s.label}</span>
+                      </div>
+                      <div className="mt-1 font-mono text-[17px] leading-none text-txt num">{s.n}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-3 border-t border-line pt-2.5">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <span className="tlabel tlabel-dim">FLEET HEALTH / RISK</span>
+                    <span className="font-mono text-[11px] num" style={{ color: stateColor(healthState(averageHealth)) }}>{num(averageHealth, 1)} AVG</span>
+                  </div>
+                  <div className="flex h-[6px] overflow-hidden border border-line-strong bg-base" role="img" aria-label="Fleet health risk distribution">
+                    {healthSegs.filter((s) => s.n > 0).map((s) => (
+                      <span key={s.label} className="h-full" style={{ width: `${(s.n / total) * 100}%`, background: s.color }} />
+                    ))}
+                  </div>
+                  <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1">
+                    {healthSegs.map((s) => <SumRow key={s.label} label={s.label} value={s.n} dot={s.color} />)}
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-3 border-t border-line pt-2.5 sm:grid-cols-2 2xl:grid-cols-1">
+                  <div className="space-y-1.5">
+                    <div className="tlabel tlabel-dim mb-1">RISK PRIORITIES</div>
+                    <SumRow label="AIRCRAFT REQ. ATTENTION" value={attention.size} color={attention.size ? stateColor('alert') : stateColor('ok')} />
+                    <SumRow label="ACTIVE ALERTS" value={alerts.length} color={alerts.length ? stateColor('crit') : stateColor('ok')} />
+                    <SumRow label="CRITICAL COMPONENTS" value={criticalComponents} color={criticalComponents ? stateColor('crit') : stateColor('ok')} />
+                    <SumRow label="PRED FAILURE · 30D" value={d.predicted_30d} color={d.predicted_30d ? stateColor('alert') : stateColor('ok')} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="tlabel tlabel-dim mb-1">MAINTENANCE LOAD</div>
+                    <SumRow label="WORK ORDER BACKLOG" value={d.backlog} color={d.backlog ? stateColor('warn') : stateColor('ok')} />
+                    <SumRow label="ACTIVE ACTIONS" value={activeMaintenance} color={activeMaintenance ? stateColor('warn') : undefined} />
+                    <SumRow label="UPCOMING · 14D" value={upcomingMaintenance} />
+                    <SumRow label="UNASSIGNED" value={unassignedMaintenance} color={unassignedMaintenance ? stateColor('alert') : stateColor('ok')} />
+                  </div>
+                </div>
+
+                <div className="mt-3 space-y-1.5 border-t border-line pt-2.5">
+                  {highestRisk && (
+                    <SumRow label={`HIGHEST RISK · ${highestRisk.aircraft_id}`}
+                      value={pctOf(highestRisk.failure_prob * 100, 0)} color={stateColor(probState(highestRisk.failure_prob))} />
+                  )}
+                  {lowestRul && (
+                    <SumRow label={`LOWEST RUL · ${lowestRul.id}`}
+                      value={`${num(lowestRul.rul, 0)} D`} color={stateColor(rulState(lowestRul.rul))} />
+                  )}
+                </div>
+
+                <Link to="/app/fleet" className="link mt-auto block border-t border-line pt-2.5 font-mono text-[10.5px] uppercase tracking-[0.08em]">
                   FULL FLEET REGISTRY →
                 </Link>
               </div>
@@ -269,13 +338,11 @@ export default function CommandCenter() {
           </div>
         </Panel>
 
-        {/* active events */}
-        {/* The feed fills the row height set by the status board and scrolls
-            internally only when the two panels sit side by side; stacked, it
-            renders in full and the page remains the single scroll owner. */}
+        {/* Active events shares the status-board row without adding another
+            scroll owner; the document remains the command center's scrollbar. */}
         <Panel title="SECTION 03 — ACTIVE EVENTS" sub="CURRENT ALERTS BY SEVERITY" icon="alert"
           className="flex flex-col" bodyClass="flex min-h-0 flex-1 flex-col p-0">
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="min-h-0 flex-1">
             {alerts.length === 0 ? (
               <div className="p-3"><EmptyState title="NO ACTIVE ALERTS" message="No aircraft currently require immediate attention." hint={`LAST CHECKED ${(sys.lastUpdated ? istClock(sys.lastUpdated) : '—')}`} /></div>
             ) : alerts.slice(0, 7).map((a, i) => {

@@ -26,9 +26,9 @@
   --crit: #d97070;
 
   /* application chrome geometry — single source of truth */
-  --sidebar-w: 212px;
+  --sidebar-w: 226px;
   --topbar-h: 44px;
-  --page-max: 1560px;
+  --page-max: 1760px;
 }
 
 /* ============================================================

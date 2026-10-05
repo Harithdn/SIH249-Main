@@ -7,8 +7,8 @@ import FleetPage from './pages/FleetPage';
 import AircraftWorkspace from './pages/AircraftWorkspace';
 import { Predictions, Anomalies, Rul } from './pages/PredictPages';
 import Recommendations from './pages/Recommendations';
-import { WorkOrders, Schedule, History } from './pages/MaintenancePages';
-import { Inventory, Forecast, Technicians } from './pages/LogisticsPages';
+import { WorkOrders, History } from './pages/MaintenancePages';
+import { Inventory, Technicians } from './pages/LogisticsPages';
 import { Analytics, FailureAnalysis, WhatIf } from './pages/AnalyticsPages';
 import { Alerts, Models, SystemStatus, DataSources, AuditLog, Copilot, Thread } from './pages/SystemPages';
 
@@ -53,10 +53,12 @@ export default function App() {
             <Route path="rul" element={<Rul />} />
             <Route path="recommendations" element={<Recommendations />} />
             <Route path="work-orders" element={<WorkOrders />} />
-            <Route path="schedule" element={<Schedule />} />
+            {/* Consolidated workspace aliases preserve old bookmarks without
+                leaving duplicate top-level destinations. */}
+            <Route path="schedule" element={<Navigate to="/app/work-orders#schedule" replace />} />
             <Route path="history" element={<History />} />
             <Route path="inventory" element={<Inventory />} />
-            <Route path="forecast" element={<Forecast />} />
+            <Route path="forecast" element={<Navigate to="/app/inventory#forecast" replace />} />
             <Route path="technicians" element={<Technicians />} />
 
             {/* analytics */}

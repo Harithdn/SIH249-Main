@@ -31,22 +31,26 @@ import { istClock } from '../lib/format';
  */
 const NAV: { group: string; icon: IconName; items: [string, string][] }[] = [
   { group: 'COMMAND', icon: 'target', items: [['Overview', '/app'], ['Fleet', '/app/fleet'], ['Alerts', '/app/alerts']] },
-  { group: 'AIRCRAFT', icon: 'aircraft', items: [['Aircraft', '/app/aircraft'], ['Digital Twin', '/app/twin'], ['Telemetry', '/app/telemetry'], ['Health', '/app/health'], ['Diagnostics', '/app/diagnostics']] },
-  { group: 'MAINTENANCE', icon: 'wrench', items: [['Predictions', '/app/predictions'], ['Anomalies', '/app/anomalies'], ['RUL Analysis', '/app/rul'], ['Recommendations', '/app/recommendations'], ['Work Orders', '/app/work-orders'], ['Schedule', '/app/schedule'], ['History', '/app/history'], ['Inventory', '/app/inventory'], ['Spares Forecast', '/app/forecast'], ['Technicians', '/app/technicians']] },
-  { group: 'ANALYTICS', icon: 'chart', items: [['Fleet Trends', '/app/analytics'], ['Failure Analysis', '/app/failure-analysis'], ['Scenario Simulation', '/app/whatif'], ['Model Performance', '/app/models']] },
-  { group: 'SYSTEM', icon: 'gear', items: [['System Status', '/app/system'], ['Data Sources', '/app/data-sources'], ['Digital Thread', '/app/thread'], ['Query Console', '/app/copilot'], ['Audit Log', '/app/audit']] },
+  // Aircraft health, the interactive twin, telemetry and diagnostics now live
+  // inside one context-preserving aircraft workspace.
+  { group: 'AIRCRAFT', icon: 'aircraft', items: [['Aircraft', '/app/aircraft']] },
+  // Scheduling is embedded in Work Orders; demand forecasting is embedded in
+  // Inventory. Fleet-wide predictions and recommendations remain distinct
+  // because they are cross-aircraft decision queues.
+  { group: 'MAINTENANCE', icon: 'wrench', items: [['Work Orders', '/app/work-orders'], ['Inventory', '/app/inventory'], ['Predictions', '/app/predictions'], ['Recommendations', '/app/recommendations']] },
+  { group: 'ANALYTICS', icon: 'chart', items: [['Analytics', '/app/analytics'], ['Failure Analysis', '/app/failure-analysis'], ['Simulation', '/app/whatif'], ['Model Performance', '/app/models']] },
+  { group: 'SYSTEM', icon: 'gear', items: [['System', '/app/system'], ['Data Sources', '/app/data-sources'], ['Digital Thread', '/app/thread'], ['Query Console', '/app/copilot'], ['Audit Log', '/app/audit']] },
 ];
 
 const SECTION_TITLES: Record<string, string> = {
   '/app': 'COMMAND CENTER', '/app/fleet': 'FLEET', '/app/alerts': 'ALERTS',
   '/app/predictions': 'PREDICTIONS', '/app/anomalies': 'ANOMALIES',
   '/app/rul': 'RUL ANALYSIS', '/app/recommendations': 'RECOMMENDATIONS',
-  '/app/work-orders': 'WORK ORDERS', '/app/schedule': 'SCHEDULE',
-  '/app/history': 'HISTORY', '/app/inventory': 'INVENTORY',
-  '/app/forecast': 'SPARES FORECAST', '/app/technicians': 'TECHNICIANS',
-  '/app/analytics': 'FLEET TRENDS', '/app/failure-analysis': 'FAILURE ANALYSIS',
-  '/app/whatif': 'SCENARIO SIMULATION', '/app/models': 'MODEL PERFORMANCE',
-  '/app/system': 'SYSTEM STATUS', '/app/data-sources': 'DATA SOURCES',
+  '/app/work-orders': 'WORK ORDERS', '/app/history': 'MAINTENANCE HISTORY',
+  '/app/inventory': 'INVENTORY', '/app/technicians': 'TECHNICIANS',
+  '/app/analytics': 'ANALYTICS', '/app/failure-analysis': 'FAILURE ANALYSIS',
+  '/app/whatif': 'SIMULATION', '/app/models': 'MODEL PERFORMANCE',
+  '/app/system': 'SYSTEM', '/app/data-sources': 'DATA SOURCES',
   '/app/thread': 'DIGITAL THREAD', '/app/copilot': 'QUERY CONSOLE',
   '/app/audit': 'AUDIT LOG',
 };
@@ -55,6 +59,9 @@ const SECTION_TITLES: Record<string, string> = {
 const SECTION_GROUP: Record<string, string> = (() => {
   const m: Record<string, string> = {};
   NAV.forEach((g) => g.items.forEach(([, path]) => { m[path] = g.group; }));
+  // Secondary tools stay reachable from their parent workspaces without
+  // competing for permanent sidebar space.
+  ['/app/anomalies', '/app/rul', '/app/history', '/app/technicians'].forEach((path) => { m[path] = 'MAINTENANCE'; });
   return m;
 })();
 
@@ -63,69 +70,64 @@ function NavSidebar({ onNavigate, idPrefix = '' }: { onNavigate?: () => void; id
   const nav = useNavigate();
   const location = useLocation();
 
-  // context-driven routes highlight their parent item.
-  // /app/aircraft/:id(/tab) — segment 4 is the workspace tab.
+  // Context-driven aircraft routes all belong to the single Aircraft item.
   const isActive = (path: string) => {
     const p = location.pathname;
     if (path === '/app') return p === '/app';
-    if (path === '/app/aircraft') {
-      if (!p.startsWith('/app/aircraft')) return false;
-      const tab = p.split('/')[4] || 'overview';
-      return tab === 'overview';
-    }
-    if (['/app/twin', '/app/telemetry', '/app/diagnostics'].includes(path)) {
-      if (!p.startsWith('/app/aircraft/')) return false;
-      const tab = p.split('/')[4];
-      return ({ twin: '/app/twin', telemetry: '/app/telemetry', diagnostics: '/app/diagnostics' } as Record<string, string>)[tab] === path;
-    }
-    if (path === '/app/health') return false; // alias — lands on the aircraft overview (subsystem health matrix)
+    if (path === '/app/aircraft') return p.startsWith('/app/aircraft');
     return p.startsWith(path);
   };
 
   // category containing the current route — expanded automatically on
   // navigation (covers refresh and direct deep links too). Accordion:
   // exactly one category is open at a time; headers toggle it.
-  const routeGroup = NAV.find((g) => g.items.some(([, path]) => isActive(path)))?.group ?? null;
+  const routeBase = location.pathname.split('/').slice(0, 3).join('/');
+  const routeGroup = NAV.find((g) => g.items.some(([, path]) => isActive(path)))?.group
+    ?? SECTION_GROUP[routeBase]
+    ?? null;
   const [open, setOpen] = useState<string | null>(routeGroup);
   useEffect(() => { if (routeGroup) setOpen(routeGroup); }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
-      <div className="shrink-0 border-b border-line px-4 py-2.5">
-        <div className="font-mono text-[13px] font-semibold leading-tight tracking-[0.18em] text-txt">AEROSENTINEL</div>
-        <div className="tlabel mt-0.5">FLEET OPERATIONS · PREDICTIVE MAINTENANCE</div>
+      <div className="shrink-0 border-b border-line px-4 py-3">
+        <div className="font-mono text-[14px] font-semibold leading-tight tracking-[0.18em] text-txt">AEROSENTINEL</div>
+        <div className="mt-1 font-mono text-[10px] uppercase leading-[1.45] tracking-[0.1em] text-txt-faint">
+          <span className="block">FLEET OPERATIONS</span>
+          <span className="block">PREDICTIVE MAINTENANCE</span>
+        </div>
       </div>
 
       {/* scrolls internally only when the navigation exceeds the viewport */}
-      <nav className="app-nav px-2 py-1.5" aria-label="Application navigation">
+      <nav className="app-nav px-2.5 py-2" aria-label="Application navigation">
         {NAV.map((g) => {
           const isOpen = open === g.group;
           const containsActive = routeGroup === g.group;
           return (
-            <div key={g.group} className="mb-0.5 last:mb-0">
+            <div key={g.group} className="mb-1 last:mb-0">
               <button
                 onClick={() => setOpen(isOpen ? null : g.group)}
-                className={`flex w-full items-center gap-2 rounded-[2px] px-2 py-[6px] text-left ${
-                  containsActive ? 'text-txt' : 'text-txt-dim hover:bg-surface2 hover:text-txt'
+                className={`group flex w-full items-center gap-2 rounded-[2px] px-2 py-2 text-left transition-colors ${
+                  containsActive ? 'bg-surface/60 text-txt' : 'text-txt-dim hover:bg-surface2 hover:text-txt'
                 }`}
                 aria-expanded={isOpen}
                 aria-controls={`nav-${idPrefix}${g.group}`}
               >
                 {/* active-category marker — fixed width so headers never shift */}
-                <span className="h-3.5 w-[2px] shrink-0" style={{ background: containsActive ? '#56A8CC' : 'transparent' }} aria-hidden="true" />
-                <Icon name={g.icon} size={12} className={`shrink-0 ${containsActive ? 'text-acc' : 'text-txt-faint'}`} />
-                <span className="min-w-0 flex-1 whitespace-nowrap font-mono text-[10.5px] font-semibold uppercase leading-tight tracking-[0.16em]">
+                <span className="h-4 w-[2px] shrink-0" style={{ background: containsActive ? '#56A8CC' : 'transparent' }} aria-hidden="true" />
+                <Icon name={g.icon} size={13} className={`shrink-0 ${containsActive ? 'text-acc' : 'text-txt-faint group-hover:text-txt-dim'}`} />
+                <span className="min-w-0 flex-1 whitespace-nowrap font-mono text-[11.5px] font-semibold uppercase leading-[1.35] tracking-[0.14em]">
                   {g.group}
                 </span>
-                <span className="shrink-0 font-mono text-[9px] text-txt-faint">{g.items.length}</span>
-                <Icon name={isOpen ? 'chevronDown' : 'chevronRight'} size={11} className="shrink-0 text-txt-faint" />
+                <span className="shrink-0 font-mono text-[9.5px] text-txt-faint">{g.items.length}</span>
+                <Icon name={isOpen ? 'chevronDown' : 'chevronRight'} size={12} className="shrink-0 text-txt-faint" />
               </button>
               {isOpen && (
-                <div id={`nav-${idPrefix}${g.group}`} className="mb-1.5 ml-[27px] mt-0.5 border-l border-line pl-1.5">
+                <div id={`nav-${idPrefix}${g.group}`} className="mb-2 ml-[28px] mt-1 border-l border-line-strong pl-2">
                   {g.items.map(([label, path]) => (
                     <NavLink key={path} to={path} onClick={onNavigate}
-                      className={`block rounded-[2px] px-2 py-[3px] text-[12px] leading-[1.35] ${
-                        isActive(path) ? 'bg-[#17303C] text-acc' : 'text-txt-dim hover:bg-surface2 hover:text-txt'
+                      className={`relative block rounded-[2px] px-2.5 py-1.5 text-[13px] leading-[1.4] transition-colors ${
+                        isActive(path) ? 'bg-[#17303C] font-medium text-acc before:absolute before:-left-[9px] before:top-1/2 before:h-4 before:w-px before:-translate-y-1/2 before:bg-acc' : 'text-txt-dim hover:bg-surface2 hover:text-txt'
                       }`}
                       aria-current={isActive(path) ? 'page' : undefined}>
                       {label}
@@ -260,8 +262,16 @@ export default function AppShell() {
 
   useEffect(() => { setDrawer(false); }, [location.pathname]);
 
-  // predictable scrolling: every route starts at the top of the document
-  useEffect(() => { window.scrollTo(0, 0); }, [location.pathname]);
+  // Predictable route scrolling; consolidated legacy routes may target an
+  // internal section (for example /schedule → /work-orders#schedule).
+  useEffect(() => {
+    if (location.hash) {
+      const id = decodeURIComponent(location.hash.slice(1));
+      requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: 'start' }));
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [location.pathname, location.hash]);
 
   // overlay behaviour: lock the page scroll (no double scrollbars) and
   // restore focus handling while the navigation drawer is open

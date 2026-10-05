@@ -45,6 +45,8 @@ export function Predictions() {
         sub="Component-level failure probability, remaining useful life and model confidence, recomputed from live telemetry. Select a row for model reasoning."
         provenance="MODEL: RANDOMFOREST PROXY · SYNTHETIC EVALUATION"
       >
+        <Link className="btn" to="/app/anomalies">ANOMALIES</Link>
+        <Link className="btn" to="/app/rul">RUL ANALYSIS</Link>
         <label className="flex items-center gap-2">
           <span className="tlabel">MIN P(FAIL) {(min * 100).toFixed(0)}%</span>
           <input type="range" min="0" max="0.8" step="0.05" value={min} onChange={(e) => setMin(+e.target.value)} className="inp w-32" aria-label="Minimum failure probability" />

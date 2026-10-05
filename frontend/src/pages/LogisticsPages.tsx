@@ -40,10 +40,11 @@ export function Inventory() {
   return (
     <div>
       <PageHeader
-        title="SPARE PARTS INVENTORY"
-        sub="Stock positions against minimum levels, predicted demand and supplier lead times. Shortages are flagged for replenishment review."
-        provenance="INVENTORY DATA: SYNTHETIC"
+        title="INVENTORY"
+        sub="Current stock, part availability and predictive spares demand in one logistics workspace. Shortages and projected reorder risks are flagged for review."
+        provenance="INVENTORY + PREDICTION DATA · SYNTHETIC"
       >
+        <a className="btn" href="#forecast">SPARES FORECAST ↓</a>
         <SearchInput value={q} onChange={setQ} placeholder="SEARCH PART / CATEGORY" />
         <Segmented value={risk} onChange={setRisk} ariaLabel="Stock risk filter"
           options={[{ id: 'ALL', label: 'ALL', count: counts.ALL }, { id: 'HIGH', label: 'SHORTAGE', count: counts.HIGH }, { id: 'MEDIUM', label: 'WATCH', count: counts.MEDIUM }, { id: 'LOW', label: 'ADEQUATE', count: counts.LOW }]} />
@@ -93,15 +94,18 @@ export function Inventory() {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-3 py-2 font-mono text-[9px] tracking-[0.05em] text-txt-faint">
           <span>DEMAND = EXPECTED MONTHLY CONSUMPTION (SYNTHETIC) · LEAD TIME FROM SUPPLIER MASTER</span>
-          <Link to="/app/forecast" className="link font-mono text-[10px] uppercase tracking-[0.08em]">PREDICTIVE DEMAND FORECAST →</Link>
+          <a href="#forecast" className="link font-mono text-[10px] uppercase tracking-[0.08em]">SPARES FORECAST ↓</a>
         </div>
       </Panel>
+
+      {/* Predictive demand stays adjacent to the stock it informs. */}
+      <Forecast embedded />
     </div>
   );
 }
 
 /* ================= FORECAST ================= */
-export function Forecast() {
+export function Forecast({ embedded = false }: { embedded?: boolean }) {
   const sys = useSystem();
   const [rows, setRows] = useState<any[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -115,18 +119,34 @@ export function Forecast() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sys.refreshKey]);
 
+  useEffect(() => {
+    if (embedded && rows && window.location.hash === '#forecast') {
+      requestAnimationFrame(() => document.getElementById('forecast')?.scrollIntoView({ block: 'start' }));
+    }
+  }, [embedded, rows]);
+
   if (err) return <ErrorState title="FORECAST UNAVAILABLE" message="Unable to retrieve the spares demand forecast." detail={err} onRetry={() => sys.bumpRefresh()} />;
   if (!rows) return <LoadingState label="COMPUTING SPARES DEMAND FORECAST" />;
 
   const cur = rows.find((r) => r.part_id === sel);
 
   return (
-    <div>
-      <PageHeader
-        title="SPARES DEMAND FORECAST"
-        sub="Predicted component failures mapped to required parts: projected stock trajectory against predicted demand over six months."
-        provenance="DEMAND FROM PREDICTION MODEL · SYNTHETIC"
-      />
+    <section id={embedded ? 'forecast' : undefined} className={embedded ? 'mt-4 scroll-mt-14 border-t border-line pt-4' : ''}>
+      {embedded ? (
+        <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="font-mono text-[12px] font-semibold uppercase tracking-[0.12em] text-txt">SPARES FORECAST</h2>
+            <div className="mt-1 text-[11.5px] text-txt-dim">Projected demand, stock coverage and reorder risk from active component predictions.</div>
+          </div>
+          <span className="provenance">PREDICTION MODEL · SYNTHETIC</span>
+        </div>
+      ) : (
+        <PageHeader
+          title="SPARES DEMAND FORECAST"
+          sub="Predicted component failures mapped to required parts: projected stock trajectory against predicted demand over six months."
+          provenance="DEMAND FROM PREDICTION MODEL · SYNTHETIC"
+        />
+      )}
 
       <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)]">
         <Panel title="PARTS BY PROJECTED COVERAGE" sub={`${rows.length} PARTS`} icon="box" bodyClass="p-0">
@@ -167,7 +187,7 @@ export function Forecast() {
           </Panel>
         ) : <Panel title="STOCK TRAJECTORY"><NotAvailable /></Panel>}
       </div>
-    </div>
+    </section>
   );
 }
 
