@@ -33,7 +33,7 @@ const NAV: { group: string; icon: IconName; items: [string, string][] }[] = [
   { group: 'COMMAND', icon: 'target', items: [['Overview', '/app'], ['Fleet', '/app/fleet'], ['Alerts', '/app/alerts']] },
   // Aircraft health, the interactive twin, telemetry and diagnostics now live
   // inside one context-preserving aircraft workspace.
-  { group: 'AIRCRAFT', icon: 'aircraft', items: [['Aircraft', '/app/aircraft']] },
+  { group: 'AIRCRAFT', icon: 'aircraft', items: [['Aircraft', '/app/aircraft'], ['Digital Twin', '/app/twin']] },
   // Scheduling is embedded in Work Orders; demand forecasting is embedded in
   // Inventory. Fleet-wide predictions and recommendations remain distinct
   // because they are cross-aircraft decision queues.
@@ -119,7 +119,6 @@ function NavSidebar({ onNavigate, idPrefix = '' }: { onNavigate?: () => void; id
                 <span className="min-w-0 flex-1 whitespace-nowrap font-mono text-[11.5px] font-semibold uppercase leading-[1.35] tracking-[0.14em]">
                   {g.group}
                 </span>
-                <span className="shrink-0 font-mono text-[9.5px] text-txt-faint">{g.items.length}</span>
                 <Icon name={isOpen ? 'chevronDown' : 'chevronRight'} size={12} className="shrink-0 text-txt-faint" />
               </button>
               {isOpen && (
@@ -181,6 +180,8 @@ function NavSidebar({ onNavigate, idPrefix = '' }: { onNavigate?: () => void; id
 function TopBar({ onMenu, drawerOpen }: { onMenu: () => void; drawerOpen: boolean }) {
   const sys = useSystem();
   const location = useLocation();
+  const [liveClock, setLiveClock] = useState(new Date());
+  useEffect(() => { const timer = window.setInterval(() => setLiveClock(new Date()), 1000); return () => window.clearInterval(timer); }, []);
 
   const statusColor = sys.systemStatus === 'OPERATIONAL' ? 'text-ok' : sys.systemStatus === 'DEGRADED' ? 'text-crit' : 'text-txt-faint';
   const dotColor = sys.systemStatus === 'OPERATIONAL' ? '#6FB789' : sys.systemStatus === 'DEGRADED' ? '#D97070' : '#8A95A0';
@@ -201,6 +202,7 @@ function TopBar({ onMenu, drawerOpen }: { onMenu: () => void; drawerOpen: boolea
 
   return (
     <header className="app-topbar flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line bg-elev px-3 py-1.5">
+      <div className="flex shrink-0 items-center gap-2"><img src="/logo.png" alt="" className="h-7 w-7 object-contain mix-blend-multiply" /><span className="font-mono text-[12px] font-semibold tracking-[0.14em] text-txt">AeroSentinel</span></div>
       <button className="btn btn-xs btn-icon shrink-0 lg:hidden" onClick={onMenu}
         aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls="app-nav-drawer">
         <Icon name="menu" size={13} />
@@ -240,7 +242,7 @@ function TopBar({ onMenu, drawerOpen }: { onMenu: () => void; drawerOpen: boolea
         </span>
         <span className="flex items-center gap-1.5 whitespace-nowrap" title="Last successful data fetch (IST)">
           <span className="tlabel">UPDATED</span>
-          <span className="text-txt-dim num">{sys.lastUpdated ? istClock(sys.lastUpdated) : '—'}</span>
+          <span className="text-txt-dim num">{istClock(liveClock)}</span>
         </span>
         <span className="hidden h-4 w-px shrink-0 bg-line-strong sm:block" aria-hidden="true" />
         <div className="flex min-w-0 items-center gap-2" title="Authentication disabled in this demo build — all actions are attributed to the command role">

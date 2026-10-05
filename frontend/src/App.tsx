@@ -5,6 +5,7 @@ import AppLayout from './components/AppShell';
 import CommandCenter from './pages/CommandCenter';
 import FleetPage from './pages/FleetPage';
 import AircraftWorkspace from './pages/AircraftWorkspace';
+import DigitalTwinPage from './pages/DigitalTwinPage';
 import { Predictions, Anomalies, Rul } from './pages/PredictPages';
 import Recommendations from './pages/Recommendations';
 import { WorkOrders, History } from './pages/MaintenancePages';
@@ -43,7 +44,7 @@ export default function App() {
             <Route path="health" element={<AircraftContextRedirect />} />
             <Route path="diagnostics" element={<AircraftContextRedirect tab="diagnostics" />} />
             <Route path="aircraft/:id" element={<AircraftWorkspace />} />
-            <Route path="aircraft/:id/twin" element={<AircraftWorkspace />} />
+            <Route path="aircraft/:id/twin" element={<DigitalTwinPage />} />
             <Route path="aircraft/:id/telemetry" element={<AircraftWorkspace />} />
             <Route path="aircraft/:id/diagnostics" element={<AircraftWorkspace />} />
 
