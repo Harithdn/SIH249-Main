@@ -15,6 +15,11 @@ import { useSystem } from './SystemContext';
 
 /* ---------- geometry ---------- */
 const W = 920, H = 400, CY = 200;
+// The drawing coordinates stay in the original engineering-space dimensions so
+// all hotspots and subsystem geometry remain aligned. The rendered viewBox is
+// trimmed to the actual schematic extents, making the aircraft substantially
+// larger without distorting or replacing the interactive twin.
+const VIEW = { x: 52, y: 4, w: 812, h: 392 };
 // Nose is at the rounded left end (x≈80); the tail is at the right. The wing
 // tips are therefore swept aft toward increasing x. Keeping this convention
 // in the source geometry (rather than rotating the SVG) also keeps labels,
@@ -171,7 +176,7 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
   const stations = [100, 200, 300, 400, 500, 600, 700, 800];
 
   return (
-    <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(300px,340px)]">
+    <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(300px,320px)] xl:items-start">
       {/* ---------------- schematic ---------------- */}
       <Panel
         className="min-w-0"
@@ -206,8 +211,13 @@ export default function DigitalTwin({ aid, detail, preds }: { aid: string; detai
           style={{ cursor: drag.current ? 'grabbing' : 'grab' }}
           onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerLeave={onPointerUp}
         >
-          <svg viewBox={`0 0 ${W} ${H}`} className="block w-full select-none" role="img"
-            aria-label={`Aircraft ${aid} digital twin schematic, subsystem mode ${MODES.find((m) => m.id === mode)?.label}`}>
+          <svg
+            viewBox={`${VIEW.x} ${VIEW.y} ${VIEW.w} ${VIEW.h}`}
+            preserveAspectRatio="xMidYMid meet"
+            className="block w-full select-none"
+            role="img"
+            aria-label={`Aircraft ${aid} digital twin schematic, subsystem mode ${MODES.find((m) => m.id === mode)?.label}`}
+          >
             <defs>
               <pattern id="hatchP" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
                 <line x1="0" y1="0" x2="0" y2="6" stroke="#c2ced8" strokeWidth="1" />
