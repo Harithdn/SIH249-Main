@@ -38,7 +38,7 @@ The frontend is an operations application shell (left navigation + top system ba
 - **System** — service status, data quality, data sources (CSV ingestion), digital thread, read-only query console, audit log.
 
 ## Demo (centerpiece, 2 min)
-1. Login (any password): `commander / command`.
+1. Open the app — it lands directly on the **Command Center overview** (no login in this demo build).
 2. Overview → **Simulate Degradation AS-014** (or Live Mode / Degrade / Reset in the sidebar SIMULATION CONTROL cluster).
 3. Open `AS-014` diagnostics: vibration/temp rise, anomaly score ↑, P(fail) 18%→82%, RUL →16d, feature-contribution bars.
 4. Recommendations → parts check (Hydraulic Pump) → technician → slot → **Create work order**.
@@ -46,7 +46,10 @@ The frontend is an operations application shell (left navigation + top system ba
 6. Show report (`Readiness Report`), query console ("Why is AS-014 high risk?"), Digital Thread.
 
 ## Roles
-command (fleet), engineer (health/predictions/work orders), logistics (inventory/forecast), technician (assigned WOs). Mock JWT.
+Authentication is disabled in this demo build: the console opens straight into the
+operations environment and all actions are attributed to the `command` role for the
+audit trail (the backend mock `/api/auth/login` endpoint remains available for
+integration tests, but the frontend never calls it).
 
 ## Responsible AI
 No autonomous grounding/authorization; low-confidence predictions flagged; all metrics labeled demo/simulation; no classified data; no fake claims (use "projected in simulated scenario").

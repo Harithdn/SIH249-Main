@@ -18,17 +18,23 @@
 // navigation drawer is open, which is a real modal overlay).
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { useSystem } from './SystemContext';
-import { Icon } from './icons';
+import { Icon, type IconName } from './icons';
 import { istClock } from '../lib/format';
 
-const NAV: { group: string; items: [string, string][] }[] = [
-  { group: 'COMMAND', items: [['Overview', '/app'], ['Fleet', '/app/fleet'], ['Alerts', '/app/alerts']] },
-  { group: 'AIRCRAFT', items: [['Aircraft', '/app/aircraft'], ['Digital Twin', '/app/twin'], ['Telemetry', '/app/telemetry'], ['Health', '/app/health'], ['Diagnostics', '/app/diagnostics']] },
-  { group: 'MAINTENANCE', items: [['Predictions', '/app/predictions'], ['Anomalies', '/app/anomalies'], ['RUL Analysis', '/app/rul'], ['Recommendations', '/app/recommendations'], ['Work Orders', '/app/work-orders'], ['Schedule', '/app/schedule'], ['History', '/app/history'], ['Inventory', '/app/inventory'], ['Spares Forecast', '/app/forecast'], ['Technicians', '/app/technicians']] },
-  { group: 'ANALYTICS', items: [['Fleet Trends', '/app/analytics'], ['Failure Analysis', '/app/failure-analysis'], ['Scenario Simulation', '/app/whatif'], ['Model Performance', '/app/models']] },
-  { group: 'SYSTEM', items: [['System Status', '/app/system'], ['Data Sources', '/app/data-sources'], ['Digital Thread', '/app/thread'], ['Query Console', '/app/copilot'], ['Audit Log', '/app/audit']] },
+/**
+ * Primary navigation — major categories with collapsible sub-items.
+ * The sidebar initially shows ONLY the category headers; clicking a header
+ * expands/collapses its subnavigation (accordion: one category open at a
+ * time). The category containing the current route is expanded automatically
+ * — including on deep links / refresh — and its header gets the active state.
+ */
+const NAV: { group: string; icon: IconName; items: [string, string][] }[] = [
+  { group: 'COMMAND', icon: 'target', items: [['Overview', '/app'], ['Fleet', '/app/fleet'], ['Alerts', '/app/alerts']] },
+  { group: 'AIRCRAFT', icon: 'aircraft', items: [['Aircraft', '/app/aircraft'], ['Digital Twin', '/app/twin'], ['Telemetry', '/app/telemetry'], ['Health', '/app/health'], ['Diagnostics', '/app/diagnostics']] },
+  { group: 'MAINTENANCE', icon: 'wrench', items: [['Predictions', '/app/predictions'], ['Anomalies', '/app/anomalies'], ['RUL Analysis', '/app/rul'], ['Recommendations', '/app/recommendations'], ['Work Orders', '/app/work-orders'], ['Schedule', '/app/schedule'], ['History', '/app/history'], ['Inventory', '/app/inventory'], ['Spares Forecast', '/app/forecast'], ['Technicians', '/app/technicians']] },
+  { group: 'ANALYTICS', icon: 'chart', items: [['Fleet Trends', '/app/analytics'], ['Failure Analysis', '/app/failure-analysis'], ['Scenario Simulation', '/app/whatif'], ['Model Performance', '/app/models']] },
+  { group: 'SYSTEM', icon: 'gear', items: [['System Status', '/app/system'], ['Data Sources', '/app/data-sources'], ['Digital Thread', '/app/thread'], ['Query Console', '/app/copilot'], ['Audit Log', '/app/audit']] },
 ];
 
 const SECTION_TITLES: Record<string, string> = {
@@ -52,7 +58,7 @@ const SECTION_GROUP: Record<string, string> = (() => {
   return m;
 })();
 
-function NavSidebar({ onNavigate }: { onNavigate?: () => void }) {
+function NavSidebar({ onNavigate, idPrefix = '' }: { onNavigate?: () => void; idPrefix?: string }) {
   const sys = useSystem();
   const nav = useNavigate();
   const location = useLocation();
@@ -76,6 +82,13 @@ function NavSidebar({ onNavigate }: { onNavigate?: () => void }) {
     return p.startsWith(path);
   };
 
+  // category containing the current route — expanded automatically on
+  // navigation (covers refresh and direct deep links too). Accordion:
+  // exactly one category is open at a time; headers toggle it.
+  const routeGroup = NAV.find((g) => g.items.some(([, path]) => isActive(path)))?.group ?? null;
+  const [open, setOpen] = useState<string | null>(routeGroup);
+  useEffect(() => { if (routeGroup) setOpen(routeGroup); }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <>
       <div className="shrink-0 border-b border-line px-4 py-2.5">
@@ -85,20 +98,44 @@ function NavSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* scrolls internally only when the navigation exceeds the viewport */}
       <nav className="app-nav px-2 py-1.5" aria-label="Application navigation">
-        {NAV.map((g) => (
-          <div key={g.group} className="mb-1 last:mb-0">
-            <div className="px-2 pb-0.5 font-mono text-[9.5px] font-medium uppercase leading-tight tracking-[0.16em] text-txt-faint">{g.group}</div>
-            {g.items.map(([label, path]) => (
-              <NavLink key={path} to={path} onClick={onNavigate}
-                className={`block rounded-[2px] px-2 py-[3px] text-[12px] leading-[1.35] ${
-                  isActive(path) ? 'bg-[#17303C] text-acc' : 'text-txt-dim hover:bg-surface2 hover:text-txt'
+        {NAV.map((g) => {
+          const isOpen = open === g.group;
+          const containsActive = routeGroup === g.group;
+          return (
+            <div key={g.group} className="mb-0.5 last:mb-0">
+              <button
+                onClick={() => setOpen(isOpen ? null : g.group)}
+                className={`flex w-full items-center gap-2 rounded-[2px] px-2 py-[6px] text-left ${
+                  containsActive ? 'text-txt' : 'text-txt-dim hover:bg-surface2 hover:text-txt'
                 }`}
-                aria-current={isActive(path) ? 'page' : undefined}>
-                {label}
-              </NavLink>
-            ))}
-          </div>
-        ))}
+                aria-expanded={isOpen}
+                aria-controls={`nav-${idPrefix}${g.group}`}
+              >
+                {/* active-category marker — fixed width so headers never shift */}
+                <span className="h-3.5 w-[2px] shrink-0" style={{ background: containsActive ? '#56A8CC' : 'transparent' }} aria-hidden="true" />
+                <Icon name={g.icon} size={12} className={`shrink-0 ${containsActive ? 'text-acc' : 'text-txt-faint'}`} />
+                <span className="min-w-0 flex-1 whitespace-nowrap font-mono text-[10.5px] font-semibold uppercase leading-tight tracking-[0.16em]">
+                  {g.group}
+                </span>
+                <span className="shrink-0 font-mono text-[9px] text-txt-faint">{g.items.length}</span>
+                <Icon name={isOpen ? 'chevronDown' : 'chevronRight'} size={11} className="shrink-0 text-txt-faint" />
+              </button>
+              {isOpen && (
+                <div id={`nav-${idPrefix}${g.group}`} className="mb-1.5 ml-[27px] mt-0.5 border-l border-line pl-1.5">
+                  {g.items.map(([label, path]) => (
+                    <NavLink key={path} to={path} onClick={onNavigate}
+                      className={`block rounded-[2px] px-2 py-[3px] text-[12px] leading-[1.35] ${
+                        isActive(path) ? 'bg-[#17303C] text-acc' : 'text-txt-dim hover:bg-surface2 hover:text-txt'
+                      }`}
+                      aria-current={isActive(path) ? 'page' : undefined}>
+                      {label}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       <div className="shrink-0 border-t border-line p-2.5">
@@ -130,7 +167,7 @@ function NavSidebar({ onNavigate }: { onNavigate?: () => void }) {
  * Top system bar.
  *
  * Layout contract: breadcrumb (identity) and the operator cluster
- * (identity + logout) are never dropped; the operational metadata
+ * (demo-mode indicator) are never dropped; the operational metadata
  * between them degrades by priority as width is lost
  * (MODEL → DATA → SYSTEM), and the whole bar wraps to a second row
  * before anything can overlap.
@@ -140,8 +177,6 @@ function NavSidebar({ onNavigate }: { onNavigate?: () => void }) {
  * renders a second clock in the chrome.
  */
 function TopBar({ onMenu, drawerOpen }: { onMenu: () => void; drawerOpen: boolean }) {
-  const { user, logout } = useAuth();
-  const nav = useNavigate();
   const sys = useSystem();
   const location = useLocation();
 
@@ -206,17 +241,12 @@ function TopBar({ onMenu, drawerOpen }: { onMenu: () => void; drawerOpen: boolea
           <span className="text-txt-dim num">{sys.lastUpdated ? istClock(sys.lastUpdated) : '—'}</span>
         </span>
         <span className="hidden h-4 w-px shrink-0 bg-line-strong sm:block" aria-hidden="true" />
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2" title="Authentication disabled in this demo build — all actions are attributed to the command role">
           <Icon name="person" size={13} className="shrink-0 text-txt-faint" />
-          <span className="min-w-0 truncate font-mono text-[10.5px] uppercase tracking-[0.06em] text-txt-dim"
-            title={`${user?.username ?? ''} / ${String(user?.role || '').toUpperCase()}`}>
-            {user?.username}
-            <span className="hidden text-txt-faint sm:inline"> / {String(user?.role || '').toUpperCase()}</span>
+          <span className="min-w-0 truncate font-mono text-[10.5px] uppercase tracking-[0.06em] text-txt-dim">
+            DEMO
+            <span className="hidden text-txt-faint sm:inline"> / COMMAND</span>
           </span>
-          <button className="btn btn-xs btn-icon shrink-0" onClick={() => { logout(); nav('/login'); }}
-            aria-label="Log out" title="Log out">
-            <Icon name="logout" size={11} />
-          </button>
         </div>
       </div>
     </header>
@@ -267,7 +297,7 @@ export default function AppShell() {
           <div className="absolute inset-0 bg-black/60" onClick={() => setDrawer(false)} aria-hidden="true" />
           <div id="app-nav-drawer" ref={drawerRef} tabIndex={-1}
             className="absolute inset-y-0 left-0 flex w-[240px] max-w-[85vw] flex-col border-r border-line bg-elev outline-none">
-            <NavSidebar onNavigate={() => setDrawer(false)} />
+            <NavSidebar onNavigate={() => setDrawer(false)} idPrefix="drawer-" />
           </div>
         </div>
       )}

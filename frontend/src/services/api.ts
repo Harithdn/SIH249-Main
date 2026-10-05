@@ -6,7 +6,9 @@ const BASE = (import.meta as any).env?.VITE_API_URL || '';
 export const apiBase = BASE;
 
 function headers(): Record<string, string> {
-  return { 'Content-Type': 'application/json', 'X-Role': localStorage.getItem('role') || 'command' };
+  // authentication is disabled in this demo build — backend actions are
+  // attributed to the command role for the audit trail
+  return { 'Content-Type': 'application/json', 'X-Role': 'command' };
 }
 
 export async function api<T = any>(path: string, opts: RequestInit = {}): Promise<T> {
