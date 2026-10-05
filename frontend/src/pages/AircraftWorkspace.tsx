@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { get } from '../services/api';
 import { useSystem } from '../components/SystemContext';
-import DigitalTwin from '../components/DigitalTwin';
 import { Panel, SectionHeader, StatusTag, StateTag, HealthBar, LoadingState, ErrorState, EmptyState, Metric, MetricGrid, ContribBar, NotAvailable, KV } from '../components/ui';
 import { TelemetryChart, RulChart, CHART } from '../components/charts';
 import { Icon } from '../components/icons';
@@ -55,7 +54,6 @@ export default function AircraftWorkspace() {
 
   const tabs: [string, string, string][] = [
     [``, 'OVERVIEW', 'aircraft'],
-    [`twin`, 'DIGITAL TWIN', 'aircraft'],
     [`telemetry`, 'TELEMETRY', 'waveform'],
     [`diagnostics`, 'DIAGNOSTICS', 'target'],
   ];
@@ -155,7 +153,6 @@ export default function AircraftWorkspace() {
       </nav>
 
       {tab === 'overview' && <OverviewTab detail={detail} preds={preds} />}
-      {tab === 'twin' && <DigitalTwin aid={detail.aircraft_id} detail={detail} preds={preds} />}
       {tab === 'telemetry' && <TelemetryTab aid={detail.aircraft_id} />}
       {tab === 'diagnostics' && <DiagnosticsTab detail={detail} preds={preds} />}
     </div>

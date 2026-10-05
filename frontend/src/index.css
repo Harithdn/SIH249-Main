@@ -9,21 +9,21 @@
    ============================================================ */
 
 :root {
-  --bg: #0b1015;
-  --elev: #0e141a;
-  --surface: #121a21;
-  --surface2: #161f27;
-  --inset: #0c1218;
-  --line: #1f2a33;
-  --line-strong: #2a3641;
-  --txt: #e5e8ea;
-  --txt-dim: #929ca5;
-  --txt-faint: #75808b;
-  --acc: #56a8cc;
-  --ok: #6fb789;
-  --warn: #d4ac55;
-  --alert: #d98b54;
-  --crit: #d97070;
+  --bg: #f3f6f9;
+  --elev: #ffffff;
+  --surface: #ffffff;
+  --surface2: #f7f9fb;
+  --inset: #eef2f6;
+  --line: #d8e0e8;
+  --line-strong: #b9c6d2;
+  --txt: #172b3a;
+  --txt-dim: #526575;
+  --txt-faint: #718291;
+  --acc: #1677b8;
+  --ok: #238a5b;
+  --warn: #b7791f;
+  --alert: #c45d21;
+  --crit: #c0393b;
 
   /* application chrome geometry — single source of truth */
   --sidebar-w: 226px;
@@ -165,9 +165,9 @@ body.scroll-locked {
 }
 
 /* --- scrollbars -------------------------------------------- */
-* { scrollbar-width: thin; scrollbar-color: #2a3641 transparent; }
+* { scrollbar-width: thin; scrollbar-color: #b9c6d2 transparent; }
 *::-webkit-scrollbar { width: 8px; height: 8px; }
-*::-webkit-scrollbar-thumb { background: #2a3641; border-radius: 0; }
+*::-webkit-scrollbar-thumb { background: #b9c6d2; border-radius: 0; }
 *::-webkit-scrollbar-track { background: transparent; }
 
 :focus-visible {
@@ -175,7 +175,7 @@ body.scroll-locked {
   outline-offset: 1px;
 }
 
-::selection { background: #1e3a47; color: #e5e8ea; }
+::selection { background: #d7ebf7; color: #172b3a; }
 
 /* ============================================================
    TYPOGRAPHY
@@ -254,8 +254,8 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
   transition: none;
 }
-.btn:hover { background: #1d2933; border-color: #3a4956; }
-.btn:active { background: #182129; }
+.btn:hover { background: #eef4f8; border-color: #3a4956; }
+.btn:active { background: #e6eef4; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn-primary {
   background: var(--acc);
@@ -328,10 +328,10 @@ table.dt tbody td.wrap-sm {
   max-width: 250px;
   overflow-wrap: anywhere;
 }
-table.dt tbody tr:hover td { background: #151d25; }
+table.dt tbody tr:hover td { background: #f1f6f9; }
 table.dt tbody td.mono { font-family: 'IBM Plex Mono', monospace; color: var(--txt); }
 table.dt tbody tr.rowlink { cursor: pointer; }
-table.dt tbody tr.sel td { background: #14222b; }
+table.dt tbody tr.sel td { background: #e6f2f9; }
 
 /* ---------- status tags ---------- */
 /* Badges are single-line pills: the label never wraps (no CRITICA/L or
@@ -385,8 +385,8 @@ table.dt tbody tr.sel td { background: #14222b; }
   white-space: nowrap;
 }
 .seg button:last-child { border-right: none; }
-.seg button:hover { color: var(--txt-dim); background: #141c24; }
-.seg button.on { color: var(--acc); background: #17303c; }
+.seg button:hover { color: var(--txt-dim); background: #eef4f8; }
+.seg button.on { color: var(--acc); background: #e2f1fa; }
 
 /* ---------- underline tabs ---------- */
 .utabs {
@@ -456,9 +456,9 @@ a.link:hover, .link:hover { text-decoration: underline; }
    forcing a page-level horizontal scrollbar when the parent shrinks */
 .recharts-responsive-container { min-width: 0 !important; }
 .recharts-wrapper, .recharts-surface { max-width: 100%; }
-.recharts-text { font-family: 'IBM Plex Mono', monospace; font-size: 10px; fill: #75808b; }
-.recharts-cartesian-axis-line { stroke: #2a3641; }
-.recharts-cartesian-grid line { stroke: #18222b; }
+.recharts-text { font-family: 'IBM Plex Mono', monospace; font-size: 10px; fill: #718291; }
+.recharts-cartesian-axis-line { stroke: #b9c6d2; }
+.recharts-cartesian-grid line { stroke: #d8e0e8; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
