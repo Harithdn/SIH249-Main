@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { get, post, apiBase } from '../services/api';
 import { useSystem } from '../components/SystemContext';
 import { Panel, PageHeader, StatusTag, StateTag, LoadingState, ErrorState, EmptyState, Metric, MetricGrid, NotAvailable, Segmented, SearchInput, KV } from '../components/ui';
-import { int, istDateTime, istTime, num, pctOf } from '../lib/format';
+import { int, istDateTime, istTime, num, pctOf, istClock } from '../lib/format';
 import { Icon } from '../components/icons';
 import { useAuth } from '../context/AuthContext';
 
@@ -49,9 +49,9 @@ export function Alerts() {
 
       <Panel title="ACTIVE ALERTS" sub={`${filtered.length} ALERTS`} icon="alert" bodyClass="p-0">
         {filtered.length === 0 ? (
-          <div className="p-3"><EmptyState title="NO ACTIVE ALERTS" message="No aircraft currently require immediate attention." hint={`LAST CHECK ${istTime(new Date().toISOString())}`} /></div>
+          <div className="p-3"><EmptyState title="NO ACTIVE ALERTS" message="No aircraft currently require immediate attention." hint={`LAST CHECK ${(sys.lastUpdated ? istClock(sys.lastUpdated) : '—')}`} /></div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="dt">
               <thead><tr><th>TIME</th><th>SEVERITY</th><th>TYPE</th><th>AIRCRAFT</th><th>COMPONENT</th><th>MESSAGE</th><th>REQUIRED ACTION</th><th>STATUS</th><th></th></tr></thead>
               <tbody>
@@ -62,8 +62,8 @@ export function Alerts() {
                     <td>{a.type}</td>
                     <td className="mono">{a.aircraft_id || '—'}</td>
                     <td>{a.component || '—'}</td>
-                    <td style={{ whiteSpace: 'normal' }} className="max-w-[320px]">{a.message}</td>
-                    <td style={{ whiteSpace: 'normal' }} className="max-w-[240px] text-[11.5px]">{a.action}</td>
+                    <td className="wrap">{a.message}</td>
+                    <td className="wrap-sm text-[11.5px]">{a.action}</td>
                     <td><StatusTag s={a.status} /></td>
                     <td>
                       {a.aircraft_id && (
@@ -132,7 +132,7 @@ export function Models() {
         {rows.map((m, i) => (
           <Panel key={i} title={`${m.name.toUpperCase()} — ${m.version}`} sub={m.purpose} icon="chip"
             right={<StateTag st={m.status === 'Active' ? 'ok' : 'off'} label={m.status.toUpperCase()} />}>
-            <div className="grid gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-x-6 gap-y-3">
               <div>
                 <div className="tlabel mb-1">EVALUATION METRICS</div>
                 {Object.entries(m.metrics || {}).filter(([k]) => k !== 'note').map(([k, v]) => (
@@ -215,6 +215,7 @@ export function SystemStatus() {
 
       <div className="grid gap-3">
         <Panel title="SERVICES" sub="BACKEND COMPONENT STATUS" icon="database" bodyClass="p-0">
+          <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="dt">
             <thead><tr><th>SERVICE</th><th>STATUS</th><th>DESCRIPTION</th></tr></thead>
             <tbody>
@@ -222,23 +223,24 @@ export function SystemStatus() {
                 <tr key={i}>
                   <td className="text-txt">{s.service}</td>
                   <td><StateTag st={s.status === 'Operational' ? 'ok' : 'crit'} label={s.status.toUpperCase()} /></td>
-                  <td style={{ whiteSpace: 'normal' }} className="text-[11.5px]">{
+                  <td className="wrap text-[11.5px]">{
                     ({ API: 'FastAPI application serving the operational data model', Database: 'Relational store — aircraft, telemetry, work orders, records', 'ML Service': 'Inference pipeline — classifier, regressor, anomaly detector', 'Data Ingestion': 'Telemetry ingestion and CSV upload processing', 'Model Service': 'Model registry and training jobs' } as Record<string, string>)[s.service] || '—'
                   }</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </Panel>
 
         <Panel title="DATA QUALITY" sub="TELEMETRY PIPELINE INDICATORS" icon="chart">
-          <MetricGrid cols="grid-cols-2 lg:grid-cols-4">
+          <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(min(170px,100%),1fr))]">
             <Metric label="TELEMETRY COMPLETENESS" value={pctOf(dq.telemetry_completeness, 1)} st={dq.telemetry_completeness >= 95 ? 'ok' : 'warn'} />
             <Metric label="SENSOR RELIABILITY" value={pctOf(dq.sensor_reliability, 1)} st={dq.sensor_reliability >= 80 ? 'ok' : 'warn'} hint="RANGE-VALIDATED READINGS" />
             <Metric label="RECORD COMPLETENESS" value={pctOf(dq.record_completeness, 1)} st={dq.record_completeness >= 95 ? 'ok' : 'warn'} />
             <Metric label="OVERALL SCORE" value={pctOf(dq.score, 1)} st={dq.score >= 80 ? 'ok' : 'warn'} hint="WEIGHTED COMPOSITE" />
           </MetricGrid>
-          <div className="mt-3 overflow-x-auto border-t border-line pt-2">
+          <div className="tablewrap mt-3 border-t border-line pt-2" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="dt">
               <thead><tr><th>READINGS</th><th>MISSING FIELDS</th><th>STALE FEEDS (&gt;24H)</th></tr></thead>
               <tbody>
@@ -271,7 +273,7 @@ export function SystemStatus() {
                 ['APPLICATION', 'FastAPI · React operations console'],
                 ['DECISION SUPPORT', 'Alerts · recommendations · scheduling — human approval mandatory'],
               ].map(([t, d]) => (
-                <div key={t} className="grid grid-cols-[140px_1fr] gap-3 border-b border-line/60 pb-1.5 last:border-0">
+                <div key={t} className="grid grid-cols-[minmax(0,120px)_minmax(0,1fr)] sm:grid-cols-[minmax(0,140px)_minmax(0,1fr)] gap-3 border-b border-line/60 pb-1.5 last:border-0">
                   <span className="tlabel pt-0.5">{t}</span>
                   <span className="text-[11.5px] leading-snug text-txt-dim">{d}</span>
                 </div>
@@ -312,7 +314,7 @@ export function DataSources() {
         provenance="DEMO INGESTION · SYNTHETIC DATA ONLY"
       />
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)]">
         <Panel title="CSV INGESTION" sub="VALIDATION + PROFILE" icon="file">
           <label className="flex cursor-pointer flex-col items-center justify-center border border-dashed border-line-strong bg-inset/50 px-6 py-10 text-center">
             <Icon name="file" size={18} className="mb-2 text-txt-faint" />
@@ -405,9 +407,9 @@ export function AuditLog() {
 
       <Panel title="EVENT TRAIL" sub={`${filtered.length} ENTRIES · NEWEST FIRST`} icon="clock" bodyClass="p-0">
         {filtered.length === 0 ? (
-          <div className="p-3"><EmptyState title="NO AUDIT ENTRIES YET" message="Actions such as logins, work-order approvals and simulation events are recorded here as they occur." hint={`LAST FETCH ${istTime(new Date().toISOString())}`} /></div>
+          <div className="p-3"><EmptyState title="NO AUDIT ENTRIES YET" message="Actions such as logins, work-order approvals and simulation events are recorded here as they occur." hint={`LAST FETCH ${(sys.lastUpdated ? istClock(sys.lastUpdated) : '—')}`} /></div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="dt">
               <thead><tr><th>TIME</th><th>CATEGORY</th><th>ACTOR</th><th>ACTION</th><th>DETAIL</th></tr></thead>
               <tbody>
@@ -417,7 +419,7 @@ export function AuditLog() {
                     <td><span className="font-mono text-[10px] uppercase tracking-[0.08em] text-acc">{AUDIT_CATEGORY[r.action] || 'SYSTEM'}</span></td>
                     <td className="mono">{r.actor}</td>
                     <td className="mono text-txt">{(r.action || '').replace(/_/g, ' ').toUpperCase()}</td>
-                    <td style={{ whiteSpace: 'normal' }} className="max-w-[420px]">{r.detail || '—'}</td>
+                    <td className="wrap">{r.detail || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -459,7 +461,7 @@ export function Copilot() {
         provenance="READ-ONLY · RETRIEVAL FROM LIVE DATA"
       />
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)]">
         <Panel title="QUERY" icon="search">
           <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); ask(); }}>
             <input className="inp font-mono text-[12px]" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Query" />
@@ -518,7 +520,7 @@ export function Thread() {
       />
 
       <Panel title="PIPELINE STAGES" sub="SENSOR DATA → AIRCRAFT AVAILABILITY" icon="activity" bodyClass="p-0">
-        <div className="grid grid-cols-2 divide-x divide-y divide-line border-t border-line sm:grid-cols-3 lg:grid-cols-7">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(130px,100%),1fr))] divide-x divide-y divide-line border-t border-line">
           {t.steps?.map((s: string, i: number) => {
             const active = cur && (
               (i <= 4) || (cur.failure_prob > 0.5 && i <= 8) || false
@@ -527,7 +529,7 @@ export function Thread() {
               <div key={s} className={`px-3 py-2.5 ${active ? 'bg-[#14222B]' : ''}`}>
                 <div className="flex items-center gap-1.5">
                   <span className={`font-mono text-[9px] ${active ? 'text-acc' : 'text-txt-faint'}`}>{String(i + 1).padStart(2, '0')}</span>
-                  <span className={`font-mono text-[10px] uppercase tracking-[0.05em] ${active ? 'text-acc' : 'text-txt-dim'}`}>{s}</span>
+                  <span className={`min-w-0 break-words font-mono text-[10px] uppercase leading-snug tracking-[0.05em] ${active ? 'text-acc' : 'text-txt-dim'}`}>{s}</span>
                 </div>
                 {i < (t.steps?.length || 0) - 1 && <div className="mt-0.5 font-mono text-[8px] text-txt-faint">↓</div>}
               </div>
@@ -538,7 +540,7 @@ export function Thread() {
 
       {cur ? (
         <Panel title={`LIVE EXAMPLE — ${sys.currentAircraft}`} sub={`${cur.component} · CURRENT PREDICTION`} icon="target" className="mt-3">
-          <div className="grid gap-3 md:grid-cols-4">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(170px,100%),1fr))] gap-3">
             <Metric label="COMPONENT" value={cur.component.toUpperCase()} />
             <Metric label="FAILURE PROBABILITY" value={pctOf(cur.failure_prob * 100, 1)} st={cur.failure_prob > 0.5 ? 'crit' : 'ok'} />
             <Metric label="RUL" value={`${num(cur.rul, 1)} D`} />

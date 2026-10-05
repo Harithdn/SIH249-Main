@@ -110,8 +110,8 @@ export function WorkOrders() {
       )}
 
       {/* workflow strip — wraps on narrow viewports, no internal scrolling */}
-      <div className="panel mb-3 grid grid-cols-2 gap-px overflow-hidden bg-line sm:grid-cols-3 xl:grid-cols-6">
-        <div className="col-span-2 bg-surface2 px-3 py-2.5 sm:col-span-3 xl:col-span-1">
+      <div className="panel mb-3 grid grid-cols-[repeat(auto-fit,minmax(min(160px,100%),1fr))] gap-px overflow-hidden bg-line">
+        <div className="min-w-0 bg-surface2 px-3 py-2.5">
           <div className="tlabel">MAINTENANCE WORKFLOW</div>
           <div className="mt-1 font-mono text-[10px] leading-relaxed text-txt-faint">DETECTION → RESOLUTION</div>
         </div>
@@ -134,7 +134,7 @@ export function WorkOrders() {
       {/* create form */}
       {showForm && (
         <Panel title="CREATE WORK ORDER" sub="ENGINEER APPROVAL RECORDED ON SUBMIT" icon="clipboard" className="mb-3">
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(190px,100%),1fr))] gap-2">
             <label className="block"><span className="tlabel">AIRCRAFT</span>
               <select className="inp mt-1" value={form.aircraft_id} onChange={(e) => setForm({ ...form, aircraft_id: e.target.value })}>
                 {(fleet.length ? fleet.map((a) => a.aircraft_id) : [form.aircraft_id]).map((id: string) => <option key={id}>{id}</option>)}
@@ -179,7 +179,7 @@ export function WorkOrders() {
           <div className="p-3"><EmptyState title="NO WORK ORDERS" message="No work orders in this stage."
             action={<button className="btn btn-primary" onClick={() => setShowForm(true)}>NEW WORK ORDER</button>} /></div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
             <table className="dt">
               <thead>
                 <tr><th>WO</th><th>AIRCRAFT</th><th>COMPONENT</th><th>ISSUE</th><th>PRIORITY</th><th>TECHNICIAN</th><th>PARTS</th><th>EST</th><th>SCHEDULED</th><th>STATUS</th><th></th></tr>
@@ -191,7 +191,7 @@ export function WorkOrders() {
                       <td className="mono text-txt">{r.wo_id}</td>
                       <td className="mono">{r.aircraft_id}</td>
                       <td>{r.component}</td>
-                      <td style={{ whiteSpace: 'normal' }} className="max-w-[240px]">{r.issue}</td>
+                      <td className="wrap-sm">{r.issue}</td>
                       <td><StatusTag s={r.priority} /></td>
                       <td>{r.technician}</td>
                       <td className="text-[11px]">{(r.parts || []).join(', ') || '—'}</td>
@@ -204,7 +204,7 @@ export function WorkOrders() {
                       <tr>
                         <td colSpan={11} className="!whitespace-normal !bg-inset p-0">
                           <div className="flex flex-wrap items-center justify-between gap-3 p-3">
-                            <div className="grid gap-x-8 gap-y-1 sm:grid-cols-2 lg:grid-cols-4">
+                            <div className="grid min-w-0 flex-1 basis-[280px] grid-cols-[repeat(auto-fit,minmax(min(150px,100%),1fr))] gap-x-6 gap-y-1">
                               <Metric label="WORK ORDER" value={r.wo_id} />
                               <Metric label="STAGE" value={String(r.status).toUpperCase()} />
                               <Metric label="AI RECOMMENDATION" value={<span className="text-[12px]">{r.ai || '—'}</span>} />
@@ -278,12 +278,12 @@ export function Schedule() {
         provenance="SLOTS FROM RECOMMENDATION ENGINE · SYNTHETIC"
       />
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(340px,1fr)]">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)]">
         <Panel title="SCHEDULED MAINTENANCE" sub={`${rows.length} ENTRIES`} icon="calendar" bodyClass="p-0">
           {rows.length === 0 ? (
             <div className="p-3"><EmptyState title="NOTHING SCHEDULED" message="No open work orders with a scheduled date. Approve a recommendation to create one." action={<Link className="btn" to="/app/recommendations">MAINTENANCE PLAN →</Link>} /></div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
               <table className="dt">
                 <thead><tr><th>DATE</th><th>WO</th><th>AIRCRAFT</th><th>COMPONENT</th><th>TECHNICIAN</th><th>PRIORITY</th><th>STATUS</th></tr></thead>
                 <tbody>
@@ -357,7 +357,7 @@ export function History() {
         <SearchInput value={q} onChange={setQ} placeholder="SEARCH AIRCRAFT / COMPONENT" />
       </PageHeader>
 
-      <MetricGrid cols="grid-cols-2 lg:grid-cols-4" className="mb-3">
+      <MetricGrid cols="grid-cols-[repeat(auto-fit,minmax(min(170px,100%),1fr))]" className="mb-3">
         <Metric label="MTTR — MEAN TIME TO REPAIR" value={`${num(d.mttr_h, 1)} H`} />
         <Metric label="MTBF PROXY" value={`${int(d.mtbf_h)} H`} hint="DERIVED FROM RECORD DOWNTIME" />
         <Metric label="RECORDS" value={int(d.records.length)} />
@@ -370,7 +370,7 @@ export function History() {
       </MetricGrid>
 
       <Panel title="MAINTENANCE RECORDS" sub={`${records.length} SHOWN`} icon="database" bodyClass="p-0">
-        <div className="overflow-x-auto">
+        <div className="tablewrap" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="dt">
             <thead><tr><th>DATE</th><th>AIRCRAFT</th><th>TYPE</th><th>COMPONENT</th><th>FAULT</th><th>ACTION</th><th>TECHNICIAN</th><th>DOWNTIME</th></tr></thead>
             <tbody>

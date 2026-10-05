@@ -24,25 +24,35 @@
   --warn: #d4ac55;
   --alert: #d98b54;
   --crit: #d97070;
+
+  /* application chrome geometry — single source of truth */
+  --sidebar-w: 212px;
+  --topbar-h: 44px;
+  --page-max: 1560px;
 }
 
-html { background: var(--bg); }
+/* ============================================================
+   LAYOUT MODEL / SCROLL OWNERSHIP
+   ------------------------------------------------------------
+   One scroll owner: the document. The application chrome
+   (sidebar + top system bar) is position: sticky, so it stays
+   put without being removed from flow and without introducing
+   a second scroll container. Nothing clamps html/body overflow;
+   inner scroll regions exist only where they are deliberate
+   (bounded lists, log/alert feeds, horizontally scrolling
+   tables) and are opted into with .scrollpanel / .tablewrap.
+   ============================================================ */
 
-/* Root is locked: the app shell owns the entire viewport and main is the only
-   primary scroll context. Without this, the root scroller can be scrolled into
-   the clipped overflow region of the shell (blank band under the app / topbar
-   cut off when the wheel lands on a non-scrolling chrome element). */
-html, body {
+html {
   height: 100%;
-  overflow: hidden;
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  /* anchors / focus never land underneath the sticky system bar */
+  scroll-padding-top: calc(var(--topbar-h) + 8px);
 }
-
-/* Application shell: single primary scroll context (main content).
-   dvh where supported; falls back to vh. */
-.app-shell { height: 100vh; height: 100dvh; }
-
 
 body {
+  min-height: 100%;
   background: var(--bg);
   color: var(--txt);
   font-family: 'IBM Plex Sans', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
@@ -52,26 +62,140 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scroll lock used only while a true overlay (nav drawer) is open. */
+body.scroll-locked {
+  overflow: hidden;
+}
+
+/* --- application shell ------------------------------------- */
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  flex: 1 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .app-shell { grid-template-columns: var(--sidebar-w) minmax(0, 1fr); }
+}
+
+/* Sidebar: viewport-tall, pinned, scrolls internally ONLY when the
+   navigation is taller than the viewport. align-self:start keeps it a
+   sticky element inside a taller grid row. */
+/* display/flex-direction come from utilities (hidden lg:flex lg:flex-col)
+   so the responsive visibility toggle is not overridden here */
+.app-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+}
+
+.app-nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  min-height: var(--topbar-h);
+}
+
+.app-main { min-width: 0; }
+
+.app-page {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  min-width: 0;
+}
+
+/* Deliberate inner scroll regions (bounded feeds / lists). */
+.scrollpanel {
+  overflow: auto;                 /* both axes stay inside the panel */
+  overscroll-behavior: contain;
+  max-height: clamp(260px, 52vh, 560px);
+}
+/* used where the region must fill a stretched grid row instead */
+.scrollfill {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Horizontal scrolling is constrained to the table, never the page. */
+.tablewrap {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+/* skip link — keyboard users reach content without tabbing the nav */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 60;
+}
+.skip-link:focus {
+  left: 8px;
+  top: 8px;
+  padding: 6px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--acc);
+  color: var(--txt);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* --- scrollbars -------------------------------------------- */
 * { scrollbar-width: thin; scrollbar-color: #2a3641 transparent; }
 *::-webkit-scrollbar { width: 8px; height: 8px; }
 *::-webkit-scrollbar-thumb { background: #2a3641; border-radius: 0; }
 *::-webkit-scrollbar-track { background: transparent; }
 
 :focus-visible {
-  outline: 1px solid var(--acc);
+  outline: 2px solid var(--acc);
   outline-offset: 1px;
 }
 
 ::selection { background: #1e3a47; color: #e5e8ea; }
 
+/* ============================================================
+   TYPOGRAPHY
+   Dense operations-console scale with predictable line-heights.
+   Long values wrap instead of escaping their container.
+   ============================================================ */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.25;
+  overflow-wrap: break-word;
+}
+
 /* ---------- technical labels ---------- */
 .tlabel {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
-  line-height: 1.4;
+  line-height: 1.45;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--txt-faint);
+  overflow-wrap: break-word;
 }
 .tlabel-dim { color: var(--txt-dim); }
 
@@ -80,6 +204,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 4px;
+  min-width: 0;
 }
 .panel-head {
   display: flex;
@@ -89,7 +214,7 @@ body {
   column-gap: 12px;
   row-gap: 4px;
   min-height: 38px;
-  padding: 6px 12px;
+  padding: 7px 12px;
   border-bottom: 1px solid var(--line);
   background: var(--surface2);
 }
@@ -97,10 +222,12 @@ body {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   font-weight: 500;
+  line-height: 1.4;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--txt-dim);
   min-width: 0;
+  overflow-wrap: break-word;  /* section headings wrap, never clip */
 }
 .panel-body { padding: 12px; }
 
@@ -108,10 +235,14 @@ body {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  max-width: 100%;
+  min-height: 26px;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   font-weight: 500;
+  line-height: 1.3;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--txt);
@@ -134,7 +265,9 @@ body {
 .btn-primary:hover { background: #6fbedd; border-color: #6fbedd; }
 .btn-danger { color: var(--crit); border-color: #4a2525; }
 .btn-danger:hover { background: var(--crit-dim, #261313); border-color: #6b3030; }
-.btn-xs { padding: 2px 8px; font-size: 10px; }
+.btn-xs { padding: 3px 8px; font-size: 10px; min-height: 22px; }
+/* icon-only control keeps a usable hit area */
+.btn-icon { padding: 4px 6px; min-width: 26px; }
 
 /* ---------- inputs ---------- */
 .inp {
@@ -146,6 +279,8 @@ body {
   border-radius: 2px;
   padding: 5px 10px;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 .inp::placeholder { color: #5a646e; }
 .inp:focus { outline: none; border-color: var(--acc); }
@@ -158,6 +293,7 @@ table.dt thead th {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
   font-weight: 500;
+  line-height: 1.4;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   text-align: left;
@@ -175,7 +311,22 @@ table.dt tbody td {
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
   vertical-align: middle;
+  line-height: 1.45;
   color: var(--txt-dim);
+}
+/* long free-text cells: wrap inside a bounded column instead of
+   stretching the table (and the page) horizontally */
+table.dt tbody td.wrap {
+  white-space: normal;
+  min-width: 180px;
+  max-width: 340px;
+  overflow-wrap: anywhere;
+}
+table.dt tbody td.wrap-sm {
+  white-space: normal;
+  min-width: 150px;
+  max-width: 250px;
+  overflow-wrap: anywhere;
 }
 table.dt tbody tr:hover td { background: #151d25; }
 table.dt tbody td.mono { font-family: 'IBM Plex Mono', monospace; color: var(--txt); }
@@ -187,15 +338,18 @@ table.dt tbody tr.sel td { background: #14222b; }
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  max-width: 100%;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
   font-weight: 500;
+  line-height: 1.5;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 1px 7px;
   border-radius: 2px;
   border: 1px solid;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .tag .glyph { width: 7px; height: 7px; border-radius: 1px; flex: none; }
 
@@ -203,6 +357,7 @@ table.dt tbody tr.sel td { background: #14222b; }
 .seg {
   display: inline-flex;
   flex-wrap: wrap;           /* filters wrap to multiple rows instead of overflowing */
+  max-width: 100%;
   border: 1px solid var(--line-strong);
   border-radius: 2px;
   overflow: hidden;
@@ -215,6 +370,7 @@ table.dt tbody tr.sel td { background: #14222b; }
   text-transform: uppercase;
   color: var(--txt-faint);
   padding: 4px 11px;
+  min-height: 24px;
   border-right: 1px solid var(--line-strong);
   background: transparent;
   cursor: pointer;
@@ -225,8 +381,15 @@ table.dt tbody tr.sel td { background: #14222b; }
 .seg button.on { color: var(--acc); background: #17303c; }
 
 /* ---------- underline tabs ---------- */
-.utabs { display: flex; gap: 0; border-bottom: 1px solid var(--line-strong); overflow-x: auto; }
-.utabs button {
+.utabs {
+  display: flex;
+  gap: 0;
+  max-width: 100%;
+  border-bottom: 1px solid var(--line-strong);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.utabs button, .utabs a {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   letter-spacing: 0.08em;
@@ -240,33 +403,37 @@ table.dt tbody tr.sel td { background: #14222b; }
   cursor: pointer;
   white-space: nowrap;
 }
-.utabs button:hover { color: var(--txt-dim); }
-.utabs button.on { color: var(--acc); border-bottom-color: var(--acc); }
+.utabs button:hover, .utabs a:hover { color: var(--txt-dim); }
+.utabs button.on, .utabs a.on { color: var(--acc); border-bottom-color: var(--acc); }
 
 /* ---------- metric blocks ---------- */
 .metric-val {
   font-family: 'IBM Plex Mono', monospace;
   font-weight: 500;
+  line-height: 1.2;
   color: var(--txt);
   font-variant-numeric: tabular-nums;
+  overflow-wrap: break-word;
 }
 
 /* ---------- link ---------- */
 a.link, .link {
   color: var(--acc);
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 a.link:hover, .link:hover { text-decoration: underline; }
 
 /* ---------- key/value rows ---------- */
-.kv { display: flex; justify-content: space-between; gap: 16px; padding: 3px 0; }
-.kv .k { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--txt-faint); padding-top: 1px; }
-.kv .v { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--txt); text-align: right; }
+.kv { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 3px 0; }
+.kv .k { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; line-height: 1.5; letter-spacing: 0.07em; text-transform: uppercase; color: var(--txt-faint); padding-top: 1px; }
+.kv .v { min-width: 0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.45; color: var(--txt); text-align: right; overflow-wrap: anywhere; }
 
 /* ---------- misc ---------- */
 .provenance {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
+  line-height: 1.5;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--warn);
@@ -276,7 +443,15 @@ a.link:hover, .link:hover { text-decoration: underline; }
 /* loading progress bar (LoadingState) */
 @keyframes prog { 0% { margin-left: -33%; } 100% { margin-left: 100%; } }
 
-/* recharts text */
+/* ---------- charts ---------- */
+/* recharts measures its parent; these guards stop a chart from ever
+   forcing a page-level horizontal scrollbar when the parent shrinks */
+.recharts-responsive-container { min-width: 0 !important; }
+.recharts-wrapper, .recharts-surface { max-width: 100%; }
 .recharts-text { font-family: 'IBM Plex Mono', monospace; font-size: 10px; fill: #75808b; }
 .recharts-cartesian-axis-line { stroke: #2a3641; }
 .recharts-cartesian-grid line { stroke: #18222b; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+}
