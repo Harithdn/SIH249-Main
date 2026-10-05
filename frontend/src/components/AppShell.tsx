@@ -17,7 +17,7 @@
 // scrollbar; html/body are never overflow-locked (only while the mobile
 // navigation drawer is open, which is a real modal overlay).
 import { useEffect, useRef, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSystem } from './SystemContext';
 import { Icon, type IconName } from './icons';
 import { istClock } from '../lib/format';
@@ -96,16 +96,31 @@ function NavSidebar({ onNavigate, idPrefix = '' }: { onNavigate?: () => void; id
 
   return (
     <>
-      <div className="shrink-0 border-b border-line px-4 py-4">
-        <div className="flex flex-col items-center gap-2.5 text-center">
+      {/* Brand block — this IS the sidebar header (its bottom rule is the only
+          divider; no second header/border is introduced). The mark is flush
+          with the top of the sidebar so it reads inside the same band as the
+          system bar, and it doubles as the home control: a client-side route
+          back to the Command Center (/app), the application's main dashboard.
+          The logo link is sized in the flow (no fixed coordinates) so it holds
+          its position at every desktop width; -ml-3 only compensates for the
+          ~8% whitespace baked into the bitmap, keeping the optical left edge
+          of the mark on the same inset as the caption below it. */}
+      <div className="shrink-0 border-b border-line px-4 pb-3 pt-0">
+        <Link
+          to="/app"
+          onClick={onNavigate}
+          aria-label="AeroSentinel — Command Center"
+          title="AeroSentinel — Command Center"
+          className="-ml-3 block w-[150px] max-w-full cursor-pointer transition-opacity duration-150 hover:opacity-80"
+        >
           <img
             src="/final logo.png"
             alt="AeroSentinel"
-            className="h-auto w-full max-w-[184px] object-contain"
+            className="block h-auto w-full object-contain"
           />
-          <div className="whitespace-nowrap font-mono text-[10px] font-semibold uppercase leading-none tracking-[0.12em] text-txt-dim">
-            PREDICTIVE MAINTENANCE
-          </div>
+        </Link>
+        <div className="mt-1 whitespace-nowrap font-mono text-[10px] font-semibold uppercase leading-none tracking-[0.12em] text-txt-dim">
+          PREDICTIVE MAINTENANCE
         </div>
       </div>
 
