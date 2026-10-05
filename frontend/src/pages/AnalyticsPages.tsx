@@ -117,7 +117,9 @@ export function FailureAnalysis() {
           get('/api/analytics'), get('/api/anomalies').catch(() => []), get('/api/maintenance').catch(() => null),
         ]);
         if (!alive) return;
-        setA(an); setAnoms(anm); setMaint(m); sys.markUpdated();
+        // guard the contract: anomalies must be an array (a malformed 200
+        // response would otherwise crash anomalyByComp's forEach on render)
+        setA(an); setAnoms(Array.isArray(anm) ? anm : []); setMaint(m); sys.markUpdated();
       } catch (e: any) { if (alive) setErr(String(e?.message || e)); }
     })();
     return () => { alive = false; };

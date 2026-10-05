@@ -26,6 +26,13 @@ export const CHART = {
 /* ------------------------------------------------------------------ */
 function TipBox({ active, payload, label, labelFmt, unit, digits = 2 }: any) {
   if (!active || !payload?.length) return null;
+  // Intl requires minimumFractionDigits <= maximumFractionDigits; a raw
+  // `digits = 0` with the previous hard-coded minimum of 1 threw a
+  // RangeError during render and unmounted the whole app. Clamp both.
+  const maxFd = Math.min(20, Math.max(0, Math.floor(Number.isFinite(+digits) ? +digits : 2)));
+  const minFd = Math.min(1, maxFd);
+  const fmtNum = (v: number) =>
+    Number.isFinite(v) ? v.toLocaleString('en-US', { maximumFractionDigits: maxFd, minimumFractionDigits: minFd }) : '—';
   return (
     <div className="border border-line-strong bg-[#0C1218] px-2.5 py-2 shadow-none">
       <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.08em] text-txt-faint">
@@ -40,7 +47,7 @@ function TipBox({ active, payload, label, labelFmt, unit, digits = 2 }: any) {
                 <span className="text-txt-dim">{p.name}</span>
               </td>
               <td className="text-right text-txt num">
-                {typeof p.value === 'number' ? p.value.toLocaleString('en-US', { maximumFractionDigits: digits, minimumFractionDigits: 1 }) : p.value}
+                {typeof p.value === 'number' ? fmtNum(p.value) : p.value}
                 {unit && <span className="ml-1 text-[9.5px] text-txt-faint">{unit}</span>}
               </td>
             </tr>
