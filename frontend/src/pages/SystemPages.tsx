@@ -7,7 +7,6 @@ import { useSystem } from '../components/SystemContext';
 import { Panel, PageHeader, StatusTag, StateTag, LoadingState, ErrorState, EmptyState, Metric, MetricGrid, NotAvailable, Segmented, SearchInput, KV } from '../components/ui';
 import { int, istDateTime, istTime, num, pctOf, istClock } from '../lib/format';
 import { Icon } from '../components/icons';
-import { useAuth } from '../context/AuthContext';
 
 /* ================= ALERTS ================= */
 export function Alerts() {
@@ -179,7 +178,6 @@ export function Models() {
 /* ================= SYSTEM STATUS ================= */
 export function SystemStatus() {
   const sys = useSystem();
-  const { user } = useAuth();
   const [health, setHealth] = useState<any[] | null>(null);
   const [dq, setDq] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -258,7 +256,7 @@ export function SystemStatus() {
           <Panel title="ENVIRONMENT" icon="gear">
             <KV k="APPLICATION" v="AEROSENTINEL — PROTOTYPE" />
             <KV k="API BASE" v={<span className="break-all">{apiBase || 'SAME ORIGIN'}</span>} />
-            <KV k="OPERATOR" v={`${user?.username || '—'} / ${String(user?.role || '').toUpperCase()}`} />
+            <KV k="OPERATOR" v="DEMO / COMMAND" />
             <KV k="ACTIVE MODEL" v={sys.modelName} />
             <KV k="LAST UPDATED" v={sys.lastUpdated ? istTime(sys.lastUpdated.toISOString()) : '—'} />
             <KV k="DATA MODE" v={sys.simActive ? 'LIVE SIMULATION' : 'SIMULATION'} vClass="text-warn" />
@@ -298,7 +296,7 @@ export function DataSources() {
       const fd = new FormData(); fd.append('file', f);
       const r = await fetch(apiBase + '/api/data/upload', {
         method: 'POST', body: fd,
-        headers: { 'X-Role': localStorage.getItem('role') || 'command' },
+        headers: { 'X-Role': 'command' },
       });
       if (!r.ok) throw new Error(`UPLOAD FAILED — API ${r.status}`);
       setRes(await r.json());

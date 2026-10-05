@@ -15,4 +15,13 @@ export default defineConfig({
       '/ready': { target: process.env.BACKEND_URL || 'http://localhost:8000', changeOrigin: true },
     },
   },
+  // production preview keeps the same API proxying as the dev server
+  preview: {
+    host: true,
+    proxy: {
+      '/api': { target: process.env.BACKEND_URL || 'http://localhost:8000', changeOrigin: true },
+      '/health': { target: process.env.BACKEND_URL || 'http://localhost:8000', changeOrigin: true },
+      '/ready': { target: process.env.BACKEND_URL || 'http://localhost:8000', changeOrigin: true },
+    },
+  },
 })

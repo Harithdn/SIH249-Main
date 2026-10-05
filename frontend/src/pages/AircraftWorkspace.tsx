@@ -439,7 +439,7 @@ function DiagnosticsTab({ detail, preds }: { detail: any; preds: any[] }) {
                   <div className="mt-1 text-[11.5px] text-txt-faint">{top.recommendation}</div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <StatusTag s={top.severity} />
-                    {top.low_confidence && <StateTag st="warn" label="LOW CONFIDENCE — ADDITIONAL TELEMETRY RECOMMENDED" />}
+                    {top.low_confidence && <StateTag st="warn" label="LOW CONFIDENCE — ADDITIONAL TELEMETRY RECOMMENDED" className="tag-fit" />}
                   </div>
                 </div>
                 <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(130px,100%),1fr))] gap-x-6 gap-y-2 sm:min-w-[280px]">

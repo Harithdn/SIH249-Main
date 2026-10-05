@@ -334,11 +334,18 @@ table.dt tbody tr.rowlink { cursor: pointer; }
 table.dt tbody tr.sel td { background: #14222b; }
 
 /* ---------- status tags ---------- */
+/* Badges are single-line pills: the label never wraps (no CRITICA/L or
+   OPE/N breaks), never clips, and never stretches its cell — a compact
+   min-width with centered content keeps badge columns tidy. The
+   table/page never overflows as a result: wide tables scroll inside
+   .tablewrap, flex rows wrap the whole pill to a new line. */
 .tag {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   max-width: 100%;
+  min-width: 56px;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 10px;
   font-weight: 500;
@@ -348,10 +355,11 @@ table.dt tbody tr.sel td { background: #14222b; }
   padding: 1px 7px;
   border-radius: 2px;
   border: 1px solid;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 .tag .glyph { width: 7px; height: 7px; border-radius: 1px; flex: none; }
+/* opt-out only for genuinely long advisory messages rendered as a tag */
+.tag.tag-fit { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 
 /* ---------- segmented filter control ---------- */
 .seg {
