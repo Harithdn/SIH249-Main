@@ -207,7 +207,7 @@ export function EmptyState({ title, message, hint, action }: { title: string; me
 
 export function ErrorState({ title, message, detail, onRetry }: { title: string; message?: string; detail?: string; onRetry?: () => void }) {
   return (
-    <div className="border border-[#4a2525] bg-crit-dim px-4 py-4" role="alert">
+    <div className="border border-[#f0caca] bg-crit-dim px-4 py-4" role="alert">
       <div className="flex items-center gap-2 font-mono text-[11.5px] uppercase tracking-[0.12em] text-crit">
         <Icon name="alert" size={14} /> {title}
       </div>
@@ -278,7 +278,7 @@ export function Delta({ value, unit = '', invert = false }: { value: number; uni
 /* ---------------- Data provenance strip ---------------- */
 export function ProvenanceNote({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border border-[#2a2312] bg-warn-dim px-3 py-1.5 font-mono text-[10px] uppercase leading-relaxed tracking-[0.08em] text-warn">
+    <div className="border border-[#ead9aa] bg-warn-dim px-3 py-1.5 font-mono text-[10px] uppercase leading-relaxed tracking-[0.08em] text-warn">
       {children}
     </div>
   );

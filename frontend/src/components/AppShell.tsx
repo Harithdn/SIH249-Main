@@ -90,11 +90,13 @@ function NavSidebar({ onNavigate, idPrefix = '' }: { onNavigate?: () => void; id
 
   return (
     <>
-      <div className="shrink-0 border-b border-line px-4 py-3">
-        <div className="font-mono text-[14px] font-semibold leading-tight tracking-[0.18em] text-txt">AEROSENTINEL</div>
-        <div className="mt-1 font-mono text-[10px] uppercase leading-[1.45] tracking-[0.1em] text-txt-faint">
-          <span className="block">FLEET OPERATIONS</span>
-          <span className="block">PREDICTIVE MAINTENANCE</span>
+      <div className="shrink-0 border-b border-line px-4 py-3.5">
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="AeroSentinel" className="h-11 w-11 shrink-0 object-contain mix-blend-multiply" />
+          <div className="min-w-0 font-mono uppercase leading-[1.45] tracking-[0.1em]">
+            <div className="text-[11px] font-semibold text-txt">FLEET OPERATIONS</div>
+            <div className="text-[9px] text-txt-faint">PREDICTIVE MAINTENANCE</div>
+          </div>
         </div>
       </div>
 
@@ -126,7 +128,7 @@ function NavSidebar({ onNavigate, idPrefix = '' }: { onNavigate?: () => void; id
                   {g.items.map(([label, path]) => (
                     <NavLink key={path} to={path} onClick={onNavigate}
                       className={`relative block rounded-[2px] px-2.5 py-1.5 text-[13px] leading-[1.4] transition-colors ${
-                        isActive(path) ? 'bg-[#17303C] font-medium text-acc before:absolute before:-left-[9px] before:top-1/2 before:h-4 before:w-px before:-translate-y-1/2 before:bg-acc' : 'text-txt-dim hover:bg-surface2 hover:text-txt'
+                        isActive(path) ? 'bg-[#e2f1fa] font-medium text-acc before:absolute before:-left-[9px] before:top-1/2 before:h-4 before:w-px before:-translate-y-1/2 before:bg-acc' : 'text-txt-dim hover:bg-surface2 hover:text-txt'
                       }`}
                       aria-current={isActive(path) ? 'page' : undefined}>
                       {label}
@@ -202,7 +204,6 @@ function TopBar({ onMenu, drawerOpen }: { onMenu: () => void; drawerOpen: boolea
 
   return (
     <header className="app-topbar flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line bg-elev px-3 py-1.5">
-      <div className="flex shrink-0 items-center gap-2"><img src="/logo.png" alt="" className="h-7 w-7 object-contain mix-blend-multiply" /><span className="font-mono text-[12px] font-semibold tracking-[0.14em] text-txt">AeroSentinel</span></div>
       <button className="btn btn-xs btn-icon shrink-0 lg:hidden" onClick={onMenu}
         aria-label="Open navigation" aria-expanded={drawerOpen} aria-controls="app-nav-drawer">
         <Icon name="menu" size={13} />

@@ -151,7 +151,7 @@ export function Models() {
                   CONFUSION MATRIX · TRAINING DATA VOLUME · PREDICTION COUNT — NOT RECORDED BY THE PROTOTYPE REGISTRY.
                   FEATURE CONTRIBUTIONS ARE COMPUTED PER PREDICTION (SEE DIAGNOSTICS), NOT STORED AS GLOBAL IMPORTANCE.
                 </div>
-                {m.metrics?.note && <div className="mt-2 border border-[#2a2312] bg-warn-dim px-2 py-1 font-mono text-[9px] uppercase tracking-[0.06em] text-warn">{m.metrics.note}</div>}
+                {m.metrics?.note && <div className="mt-2 border border-[#ead9aa] bg-warn-dim px-2 py-1 font-mono text-[9px] uppercase tracking-[0.06em] text-warn">{m.metrics.note}</div>}
               </div>
             </div>
           </Panel>
@@ -524,7 +524,7 @@ export function Thread() {
               (i <= 4) || (cur.failure_prob > 0.5 && i <= 8) || false
             );
             return (
-              <div key={s} className={`px-3 py-2.5 ${active ? 'bg-[#14222B]' : ''}`}>
+              <div key={s} className={`px-3 py-2.5 ${active ? 'bg-[#e7f1f6]' : ''}`}>
                 <div className="flex items-center gap-1.5">
                   <span className={`font-mono text-[9px] ${active ? 'text-acc' : 'text-txt-faint'}`}>{String(i + 1).padStart(2, '0')}</span>
                   <span className={`min-w-0 break-words font-mono text-[10px] uppercase leading-snug tracking-[0.05em] ${active ? 'text-acc' : 'text-txt-dim'}`}>{s}</span>
